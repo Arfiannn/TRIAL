@@ -7,6 +7,7 @@ import { Users, UserCheck, BookOpen, Settings, } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import ApprovalsTab from './ApprovalsSection';
 import StudentsTab from './StudentSection';
+import LecturersTab from './LecturerSection';
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -103,6 +104,7 @@ export const AdminDashboard: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="lecturer" className="space-y-4">
+          {LecturersTab()}
         </TabsContent>
 
         <TabsContent value="courses" className="space-y-4">

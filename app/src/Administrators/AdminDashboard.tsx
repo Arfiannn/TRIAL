@@ -8,6 +8,7 @@ import { useAuth } from '@/auth/AuthContext';
 import ApprovalsTab from './ApprovalsSection';
 import StudentsTab from './StudentSection';
 import LecturersTab from './LecturerSection';
+import CoursesTab from './CoursesSection';
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -108,6 +109,7 @@ export const AdminDashboard: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="courses" className="space-y-4">
+          {CoursesTab()}
         </TabsContent>
       </Tabs>
     </div>

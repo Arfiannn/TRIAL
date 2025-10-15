@@ -1,4 +1,3 @@
-
 import { LoginForm } from "@/auth/LoginForm";
 import { RegisterForm } from "@/auth/RegisterForm";
 import { useLocation, useNavigate } from "react-router-dom";

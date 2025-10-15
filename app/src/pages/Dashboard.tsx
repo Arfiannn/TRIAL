@@ -1,12 +1,18 @@
-import { Navigate } from "react-router-dom";
+import { AdminDashboard } from "@/Administrators/AdminDashboard";
 import { useAuth } from "@/auth/AuthContext";
+import { Navigate } from "react-router-dom";
 
 export default function Dashboard() {
   const { user } = useAuth();
 
   if (!user) {
     return <Navigate to="/" replace />;
-  } 
+  }
 
-  return <div className="text-white">Role tidak dikenali</div>; 
+  switch (user.role) {
+    case "administrator":
+      return <AdminDashboard />;
+    default:
+      return <div className="text-white">Role tidak dikenali</div>;
+  }
 }

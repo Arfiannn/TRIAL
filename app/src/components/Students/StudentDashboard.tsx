@@ -13,9 +13,10 @@ import {
   mockUserApproved,
   mockMajor,
 } from "@/utils/mockData";
-import { BookOpen, Calendar, Clock, User } from "lucide-react";
+import { Archive, BookOpen, Calendar, Clock, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { Button } from "../ui/button";
 
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -30,6 +31,11 @@ export const StudentDashboard: React.FC = () => {
   const currentCourses = mockCourses.filter(
     (course) =>
       course.majorId === currentMajorId && course.semester === currentSemester
+  );
+
+  const archivedCourses = mockCourses.filter(
+    (course) =>
+      course.majorId === currentMajorId && course.semester < currentSemester
   );
 
   const handleToDetailCourses = (courseId: number) => {
@@ -127,7 +133,68 @@ export const StudentDashboard: React.FC = () => {
             </Card>
           )}
         </TabsContent>
+                    <div className="grid gap-4 md:grid-cols-2">
+            {archivedCourses.map((course) => {
+              const approved = mockUserApproved.find(
+                (a) => a.userId === course.lecturerId
+              );
+              const lecturer = approved
+                ? mockUser.find((u) => u.id === approved.userId)
+                : null;
 
+              return (
+                <Card key={course.id} className="bg-gray-800/30 border-gray-700">
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <Archive className="h-5 w-5 text-gray-500" />
+                      <CardTitle className="text-gray-300">
+                        {course.name}
+                      </CardTitle>
+                    </div>
+                    <CardDescription className="text-gray-500">
+                      {course.credits} SKS •{" "}
+                      {lecturer ? lecturer.name : "Belum disetujui admin"}
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent>
+                    <p className="text-gray-400 text-sm">
+                      {course.description}
+                    </p>
+                    <div className="mt-4 flex gap-2">
+                      <Badge
+                        variant="outline"
+                        className="border-gray-600 text-gray-400"
+                      >
+                        Semester {course.semester} (Selesai)
+                      </Badge>
+                    </div>
+                    <div className="mt-4">
+                      <Button
+                        onClick={() => handleToDetailCourses(course.id)}
+                        size="sm"
+                        variant="outline"
+                        className="border-gray-600 text-gray-300 hover:bg-gray-800 text-black"
+                      >
+                        Lihat Arsip
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {archivedCourses.length === 0 && (
+            <Card className="bg-gray-800/50 border-gray-700">
+              <CardContent className="pt-6 text-center">
+                <Archive className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+                <p className="text-gray-400">
+                  Belum ada mata kuliah yang diselesaikan.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         <TabsContent value="archived" className="space-y-4">
         </TabsContent>
       </Tabs>

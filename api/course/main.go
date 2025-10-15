@@ -1,7 +1,7 @@
 package main
 
 import (
-	"course/config" 
+	"course/config"
 	"course/routes"
 	"course/controllers"
 	"course/models"

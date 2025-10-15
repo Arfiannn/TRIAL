@@ -1,11 +1,40 @@
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  mockCourses,
+  mockUser,
+  mockUserApproved,
+  mockMajor,
+} from "@/utils/mockData";
+import { BookOpen, Calendar, Clock, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const currentSemester = user!.semester ?? 1;
+  const currentMajorId = user!.majorId;
+
+  // 🔍 Ambil nama jurusan berdasarkan majorId mahasiswa
+  const majorData = mockMajor.find((m) => m.id === currentMajorId);
+  // 🔍 Filter course berdasarkan jurusan & semester
+  const currentCourses = mockCourses.filter(
+    (course) =>
+      course.majorId === currentMajorId && course.semester === currentSemester
+  );
+
+  const handleToDetailCourses = (courseId: number) => {
+    navigate(`/student/detailcourses/${courseId}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -39,6 +68,64 @@ export const StudentDashboard: React.FC = () => {
         </TabsList>
 
         <TabsContent value="courses" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            {currentCourses.map((course) => {
+              const approved = mockUserApproved.find(
+                (a) => a.userId === course.lecturerId
+              );
+              const lecturer = approved
+                ? mockUser.find((u) => u.id === approved.userId)
+                : null;
+
+              return (
+                <Card
+                  key={course.id}
+                  className="bg-gray-800/50 border-gray-700 cursor-pointer hover:border-blue-500 transition"
+                  onClick={() => handleToDetailCourses(course.id)}
+                >
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-5 w-5 text-blue-400" />
+                      <CardTitle className="text-white">{course.name}</CardTitle>
+                    </div>
+                    <CardDescription className="text-gray-400">
+                      {majorData?.name} | {course.credits} SKS
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="text-gray-400">
+                    <div className="flex gap-2 items-center">
+                      <User size={15} className="text-gray-400" />
+                      <p className="text-[13px] text-gray-400">
+                        {lecturer ? lecturer.name : "Belum disetujui admin"}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 items-center py-2">
+                      <Calendar size={15} className="text-gray-400" />
+                      <p className="text-[13px] text-gray-400">{course.day}</p>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <Clock size={15} className="text-gray-400" />
+                      <p className="text-[13px] text-gray-400">
+                        {course.startTime} - {course.endTime}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {currentCourses.length === 0 && (
+            <Card className="bg-gray-800/50 border-gray-700">
+              <CardContent className="pt-6 text-center">
+                <BookOpen className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+                <p className="text-gray-400">
+                  Tidak ada mata kuliah aktif untuk semester ini.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="archived" className="space-y-4">

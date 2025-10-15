@@ -72,6 +72,8 @@ export default function DetailCoursesStudent() {
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
+          <h2 className="text-xl font-semibold text-white">Materi</h2>
+
           {materials.length > 0 || assignments.length > 0 ? (
             <div className="grid gap-4">
               {materials.length > 0 && <MaterialList materials={materials} />}
@@ -89,12 +91,13 @@ export default function DetailCoursesStudent() {
             <p className="text-gray-400 text-sm">Belum ada materi.</p>
           )}
         </TabsContent>
+
+        <TabsContent value="assignment" className="space-y-4">
           {assignments.length > 0 ? (
             <AssignmentList assignments={assignments} />
           ) : (
             <p className="text-gray-400 text-sm">Belum ada tugas.</p>
           )}
-        <TabsContent value="assignment" className="space-y-4">
         </TabsContent>
       </Tabs>
     </div>

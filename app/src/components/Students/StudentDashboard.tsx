@@ -133,7 +133,8 @@ export const StudentDashboard: React.FC = () => {
             </Card>
           )}
         </TabsContent>
-                    <div className="grid gap-4 md:grid-cols-2">
+        <TabsContent value="archived" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
             {archivedCourses.map((course) => {
               const approved = mockUserApproved.find(
                 (a) => a.userId === course.lecturerId
@@ -195,7 +196,6 @@ export const StudentDashboard: React.FC = () => {
               </CardContent>
             </Card>
           )}
-        <TabsContent value="archived" className="space-y-4">
         </TabsContent>
       </Tabs>
     </div>

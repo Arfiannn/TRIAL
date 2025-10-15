@@ -6,6 +6,7 @@ import Auth from "./pages/Auth";
 import { AuthProvider } from "./auth/AuthContext";
 import Dashboard from "./pages/Dashboard";
 import DashboardLayout from "./components/DashboardLayout";
+import DetailCourseLecturer from "./Lecturers/DetailCoursesLecturer";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
 
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/lecturer/detailcourses/:id" element={<DetailCourseLecturer />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/auth" replace />} />

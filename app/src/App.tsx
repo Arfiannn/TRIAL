@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import DashboardLayout from "./components/DashboardLayout";
 import DetailCourseLecturer from "./components/Lecturers/DetailCoursesLecturer";
 import SubmissionStudentPage from "./components/Lecturers/SubmissionList";
+import DetailCoursesStudent from "./components/Students/DetailCoursesStudent";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/lecturer/detailcourses/:id" element={<DetailCourseLecturer />} />
               <Route path="/lecturer/submissionStudent/:assignmentId" element={<SubmissionStudentPage />} />
+              <Route path="/student/detailcourses/:id" element={<DetailCoursesStudent />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/auth" replace />} />

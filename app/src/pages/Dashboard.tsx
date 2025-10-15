@@ -1,4 +1,4 @@
-import { AdminDashboard } from "@/components/Lecturers/Administrators/AdminDashboard";
+import { AdminDashboard } from "@/components/Administrators/AdminDashboard";
 import { useAuth } from "@/components/auth/AuthContext";
 import { LecturerDashboard } from "@/components/Lecturers/LecturerDashboard";
 import { Navigate } from "react-router-dom";

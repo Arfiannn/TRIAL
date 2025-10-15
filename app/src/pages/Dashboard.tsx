@@ -2,6 +2,7 @@ import { AdminDashboard } from "@/components/Lecturers/Administrators/AdminDashb
 import { useAuth } from "@/components/auth/AuthContext";
 import { LecturerDashboard } from "@/components/Lecturers/LecturerDashboard";
 import { Navigate } from "react-router-dom";
+import { StudentDashboard } from "@/components/Students/StudentDashboard";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -15,6 +16,8 @@ export default function Dashboard() {
       return <AdminDashboard />;
     case "dosen":
       return <LecturerDashboard />;
+    case "mahasiswa":
+      return <StudentDashboard />;
     default:
       return <div className="text-white">Role tidak dikenali</div>;
   }

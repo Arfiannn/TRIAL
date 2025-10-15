@@ -3,10 +3,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Auth from "./pages/Auth";
-import { AuthProvider } from "./auth/AuthContext";
+import { AuthProvider } from "./components/auth/AuthContext";
 import Dashboard from "./pages/Dashboard";
 import DashboardLayout from "./components/DashboardLayout";
-import DetailCourseLecturer from "./Lecturers/DetailCoursesLecturer";
+import DetailCourseLecturer from "./components/Lecturers/DetailCoursesLecturer";
 
 const queryClient = new QueryClient();
 

@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mockCourses, mockMajor } from '@/utils/mockData';
 import { BookOpen, Calendar, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/auth/AuthContext';
+import { useAuth } from '@/components/auth/AuthContext';
 
 export const LecturerDashboard: React.FC = () => {
   const { user } = useAuth();

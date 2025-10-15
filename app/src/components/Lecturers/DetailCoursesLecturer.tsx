@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import AssignmentSection from "./AssignmentLecturer";
+import MaterialSection from "./MaterialLecturer";
 
 export default function DetailCourseLecturer() {
   const { id } = useParams();
@@ -78,6 +79,7 @@ export default function DetailCourseLecturer() {
         </TabsContent>
 
         <TabsContent value="material">
+          <MaterialSection courseId={course.id} courseName={course.name} />
         </TabsContent>
 
         <TabsContent value="participant" className="space-y-4">

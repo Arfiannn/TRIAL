@@ -1,5 +1,5 @@
-import { LoginForm } from "@/auth/LoginForm";
-import { RegisterForm } from "@/auth/RegisterForm";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { RegisterForm } from "@/components/auth/RegisterForm";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Auth() {

@@ -1,6 +1,6 @@
-import { AdminDashboard } from "@/Administrators/AdminDashboard";
-import { useAuth } from "@/auth/AuthContext";
-import { LecturerDashboard } from "@/Lecturers/LecturerDashboard";
+import { AdminDashboard } from "@/components/Lecturers/Administrators/AdminDashboard";
+import { useAuth } from "@/components/auth/AuthContext";
+import { LecturerDashboard } from "@/components/Lecturers/LecturerDashboard";
 import { Navigate } from "react-router-dom";
 
 export default function Dashboard() {

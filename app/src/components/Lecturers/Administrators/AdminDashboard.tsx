@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mockUser, mockCourses, } from '@/utils/mockData';
 import { Users, UserCheck, BookOpen, Settings, } from 'lucide-react';
-import { useAuth } from '@/auth/AuthContext';
+import { useAuth } from '@/components/auth/AuthContext';
 import ApprovalsTab from './ApprovalsSection';
 import StudentsTab from './StudentSection';
 import LecturersTab from './LecturerSection';

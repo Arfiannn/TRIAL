@@ -6,6 +6,7 @@ import { mockUser, mockCourses, } from '@/utils/mockData';
 import { Users, UserCheck, BookOpen, Settings, } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import ApprovalsTab from './ApprovalsSection';
+import StudentsTab from './StudentSection';
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -97,13 +98,14 @@ export const AdminDashboard: React.FC = () => {
           {ApprovalsTab()}
         </TabsContent>
 
-        <TabsContent value="courses" className="space-y-4">
-        </TabsContent>
-
         <TabsContent value="student" className="space-y-4">
+          {StudentsTab()}
         </TabsContent>
 
         <TabsContent value="lecturer" className="space-y-4">
+        </TabsContent>
+
+        <TabsContent value="courses" className="space-y-4">
         </TabsContent>
       </Tabs>
     </div>

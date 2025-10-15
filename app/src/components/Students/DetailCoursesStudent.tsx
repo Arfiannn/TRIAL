@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mockCourses, mockAssignments, mockMaterials, mockUser, mockMajor } from "@/utils/mockData";
 import { Button } from "../ui/button";
 import MaterialList from "./MaterialStudent";
+import AssignmentList from "./AssignmentStudent";
 
 export default function DetailCoursesStudent() {
   const { id } = useParams();
@@ -70,19 +71,17 @@ export default function DetailCoursesStudent() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ALL */}
         <TabsContent value="all" className="space-y-4">
           {materials.length > 0 || assignments.length > 0 ? (
             <div className="grid gap-4">
               {materials.length > 0 && <MaterialList materials={materials} />}
-              
+              {assignments.length > 0 && <AssignmentList assignments={assignments} />}
             </div>
           ) : (
             <p className="text-gray-400 text-sm">Belum ada materi dan tugas.</p>
           )}
         </TabsContent>
 
-        {/* MATERI */}
         <TabsContent value="material" className="space-y-4">
           {materials.length > 0 ? (
             <MaterialList materials={materials} />
@@ -90,8 +89,11 @@ export default function DetailCoursesStudent() {
             <p className="text-gray-400 text-sm">Belum ada materi.</p>
           )}
         </TabsContent>
-
-        {/* TUGAS */}
+          {assignments.length > 0 ? (
+            <AssignmentList assignments={assignments} />
+          ) : (
+            <p className="text-gray-400 text-sm">Belum ada tugas.</p>
+          )}
         <TabsContent value="assignment" className="space-y-4">
         </TabsContent>
       </Tabs>

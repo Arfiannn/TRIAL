@@ -29,7 +29,7 @@ interface Props {
   courseId: number;
 }
 
-export default function AssignmentSection({ courseId }: Props) {
+export default function AssignmentTab({ courseId }: Props) {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Assignment | null>(null);

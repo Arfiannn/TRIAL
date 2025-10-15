@@ -3,8 +3,9 @@ import { mockCourses, mockMajor, mockUser, mockUserApproved } from "@/utils/mock
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import AssignmentSection from "./AssignmentLecturer";
-import MaterialSection from "./MaterialLecturer";
+import { Card, CardContent } from "../ui/card";
+import AssignmentTab from "./AssignmentLecturer";
+import MaterialTab from "./MaterialLecturer";
 
 export default function DetailCourseLecturer() {
   const { id } = useParams();
@@ -75,15 +76,33 @@ export default function DetailCourseLecturer() {
         </TabsList>
 
         <TabsContent value="assignment">
-          <AssignmentSection courseId={course.id} />
+          <AssignmentTab courseId={course.id} />
         </TabsContent>
 
         <TabsContent value="material">
-          <MaterialSection courseId={course.id} courseName={course.name} />
+          <MaterialTab courseId={course.id} courseName={course.name} />
         </TabsContent>
 
         <TabsContent value="participant" className="space-y-4">
-          
+          <h2 className="text-xl font-semibold text-white mb-2">
+            Daftar Mahasiswa
+          </h2>
+          <div className="grid gap-4">
+            {students.map((student) => (
+              <Card
+                key={student?.id}
+                className="bg-gray-800/50 border-gray-700 rounded-lg"
+              >
+                <CardContent className="flex justify-between items-center p-4">
+                  <div>
+                    <p className="text-white font-medium">{student?.name}</p>
+                    <p className="text-gray-400 text-sm">{student?.email} - {major?.name}</p>
+                  </div>
+                  <p className="bg-blue-900/50 border border-blue-700 rounded-xl text-white px-3 text-[13px]">Terdaftar</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
       </Tabs>
     </div>

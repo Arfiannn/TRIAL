@@ -38,7 +38,7 @@ interface Props {
   courseName: string;
 }
 
-export default function MaterialSection({ courseId, courseName }: Props) {
+export default function MaterialTab({ courseId, courseName }: Props) {
   const { user } = useAuth();
   const [materials, setMaterials] = useState<Material[]>([]);
 

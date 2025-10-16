@@ -5,13 +5,35 @@ import { mockCourses, mockMajor } from '@/utils/mockData';
 import { BookOpen, Calendar, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthContext';
+import { useMemo, useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export const LecturerDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [ semesterFilter, setSemesterFilter ]  = useState<string>("Semua");
 
-  // Filter courses taught by this lecturer
-  const teachingCourses = mockCourses.filter(course => course.lecturerId === user?.id);
+ const teachingCourses = useMemo(() => {
+    return mockCourses.filter((course) => course.lecturerId === user?.id);
+  }, [user]);
+
+  // 🔹 Ambil semester unik dari daftar course dosen ini
+  const availableSemesters = useMemo(() => {
+    const uniqueSemesters = Array.from(
+      new Set(teachingCourses.map((c) => c.semester))
+    ).sort((a, b) => a - b); // urut dari kecil ke besar
+
+    return ["Semua", ...uniqueSemesters.map((s) => s.toString())];
+  }, [teachingCourses]);
+
+  // 🔹 Filter course berdasarkan semester yang dipilih
+  const filteredCourses = useMemo(() => {
+    if (semesterFilter === "Semua") return teachingCourses;
+    return teachingCourses.filter(
+      (course) => course.semester.toString() === semesterFilter
+    );
+  }, [teachingCourses, semesterFilter]);
+
 
   const handleToDetailCourses = (courseId: number) => {
     navigate(`/lecturer/detailcourses/${courseId}`);
@@ -37,8 +59,27 @@ export const LecturerDashboard: React.FC = () => {
         </TabsList>
 
         <TabsContent value="courses" className="space-y-4">
+          <div className='flex justify-end '>
+            <Select value={semesterFilter} onValueChange={setSemesterFilter}>
+              <SelectTrigger className="w-[220px] bg-gray-800 border border-gray-700 text-gray-200">
+                <SelectValue placeholder="Pilih Semester" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border border-gray-700 text-gray-200">
+                {availableSemesters.map((semester) => (
+                  <SelectItem
+                    key={semester}
+                    value={semester.toString()}
+                    className="text-gray-200 hover:bg-gray-700"
+                  >
+                    {semester === "Semua" ? "Semua Semester" : `Semester ${semester}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2">
-            {teachingCourses.map((course) => {
+            {filteredCourses.map((course) => {
               const major = mockMajor.find((m) => m.id === course.majorId)
 
               return (

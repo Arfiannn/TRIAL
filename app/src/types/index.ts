@@ -64,6 +64,7 @@ export interface Submission {
   id: number;
   studentId: number;
   assignmentId: number;
+  text?: string;
   fileUrl?: string;
   submittedAt: Date;
 }

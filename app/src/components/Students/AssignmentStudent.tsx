@@ -33,6 +33,7 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [submitted, setSubmitted] = useState<number[]>([]); // simpan ID tugas yang sudah dikumpulkan
   const [submittedFiles, setSubmittedFiles] = useState<Record<number, { name: string; url: string }>>({});
+  const [submittedTexts, setSubmittedTexts] = useState<Record<number, string>>({});
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -55,9 +56,7 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
     }
 
     if (selectedAssignment) {
-      toast.success(
-        `Tugas "${selectedAssignment.title}" berhasil dikumpulkan!`
-      );
+      toast.success(`Tugas "${selectedAssignment.title}" berhasil dikumpulkan!`);
       setSubmitted((prev) => [...prev, selectedAssignment.id]);
     }
 
@@ -69,12 +68,19 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
       }));
     }
 
+    if (selectedAssignment && submissionText.trim()) {
+      setSubmittedTexts((prev) => ({
+        ...prev,
+        [selectedAssignment.id]: submissionText.trim(),
+      }));
+    }
 
     console.log("📁 File dikirim:", selectedFile);
     console.log("📝 Jawaban:", submissionText);
 
     setSubmissionText("");
     setSelectedFile(null);
+    setSelectedAssignment(null);
     setIsDialogOpen(false);
   };
 
@@ -150,31 +156,40 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                 </div>
               </div>
 
-              {/* Jika sudah dikumpulkan */}
-              { new Date(assignment.dueDate) < new Date() 
-                ? (
-                  <div className="items-center flex justify-center border border border-red-700 rounded-md bg-red-900/20 text-white py-1"> 
-                    Tidak Bisa Kumpul Tugas
-                  </div>
-                )
-                :
-                isSubmitted ? (
-                  <Button 
-                    className="flex items-center justify-between border border-blue-700 rounded-md p-3 bg-blue-900/20"
-                    onClick={() => {
-                      const fileData = submittedFiles[assignment.id];
-                      if (fileData?.url) {
-                        window.open(fileData.url, "_blank"); // buka tab baru
-                      } else {
-                        toast.error("File tidak ditemukan!");
-                      }
-                    }}
-                  >
-                      <div className="flex items-center gap-2 text-sm text-blue-300">
-                        <File className="h-4 w-4 text-blue-400" />
-                        <p>{submittedFiles[assignment.id]?.name || "File berhasil dikumpulkan"}</p>
+              {isSubmitted ? (
+                  <div className="space-y-3">
+                    {submittedFiles[assignment.id] && (
+                      <Button
+                        className="flex items-center justify-between border border-blue-700 rounded-md p-3 bg-blue-900/20 "
+                        onClick={() => {
+                          const fileData = submittedFiles[assignment.id];
+                          if (fileData?.url) {
+                            window.open(fileData.url, "_blank");
+                          } else {
+                            toast.error("File tidak ditemukan!");
+                          }
+                        }}
+                      >
+                        <div className="flex items-center gap-2 text-sm text-blue-300">
+                          <File className="h-4 w-4 text-blue-400" />
+                          <p>{submittedFiles[assignment.id]?.name}</p>
+                        </div>
+                      </Button>
+                    )}
+
+                    {/* ✅ Jika ada jawaban teks */}
+                    {submittedTexts[assignment.id] && (
+                      <div className="border border-gray-600 bg-gray-900/10 rounded-md p-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <CheckCircle className="h-4 w-4 text-green-400" />
+                          <p className="text-gray-400 text-sm">Jawaban teks terkirim</p>
+                        </div>
+                        <p className="text-gray-200 text-sm whitespace-pre-wrap">
+                          {submittedTexts[assignment.id]}
+                        </p>
                       </div>
-                  </Button>
+                    )}
+                  </div>
                 ) : (
                   <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
@@ -255,7 +270,6 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                     </DialogContent>
                   </Dialog>
                 )
-              
               }
             </CardContent>
           </Card>

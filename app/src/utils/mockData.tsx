@@ -224,7 +224,7 @@ export const mockAssignments: Assignment[] = [
     title: "Tugas 1: Hello World Program",
     description:
       "Buat program sederhana yang menampilkan 'Hello World' dalam berbagai bahasa pemrograman (Python, Java, C, dan Go).",
-    dueDate: new Date("2025-10-16"),
+    dueDate: new Date("2025-10-16T23:59:00"),
     maxScore: 100,
     fileUrl: "/files/file1.pdf",
     createdAt: new Date("2024-10-01"),
@@ -235,7 +235,7 @@ export const mockAssignments: Assignment[] = [
     title: "Tugas 2: Struktur Percabangan",
     description:
       "Implementasikan struktur kontrol if-else dan switch dalam program interaktif yang meminta input dari pengguna.",
-    dueDate: new Date("2025-11-01"),
+    dueDate: new Date("2025-11-01T23:59:00"),
     maxScore: 100,
     fileUrl: "/files/file1.pdf",
     createdAt: new Date("2024-10-10"),
@@ -246,7 +246,7 @@ export const mockAssignments: Assignment[] = [
     title: "Tugas 1: Logika Proposisi dan Tabel Kebenaran",
     description:
       "Selesaikan soal-soal mengenai logika proposisi, konjungsi, disjungsi, implikasi, dan buat tabel kebenaran untuk setiap kasus.",
-    dueDate: new Date("2025-10-25"),
+    dueDate: new Date("2025-10-25T23:59:00"),
     maxScore: 100,
     fileUrl: "/files/file1.pdf",
     createdAt: new Date("2024-09-30"),
@@ -257,7 +257,7 @@ export const mockAssignments: Assignment[] = [
     title: "Tugas 1: Implementasi Stack dan Queue",
     description:
       "Buat implementasi struktur data Stack dan Queue menggunakan bahasa pemrograman pilihan Anda.",
-    dueDate: new Date("2025-10-28"),
+    dueDate: new Date("2025-10-28T23:59:00"),
     maxScore: 100,
     fileUrl: "/files/file1.pdf",
     createdAt: new Date("2024-10-05"),
@@ -268,7 +268,7 @@ export const mockAssignments: Assignment[] = [
     title: "Tugas 1: Desain ERD dan Normalisasi",
     description:
       "Rancang ERD untuk sistem perpustakaan dan lakukan normalisasi hingga bentuk normal ke-3.",
-    dueDate: new Date("2025-11-05"),
+    dueDate: new Date("2025-11-05T23:59:00"),
     maxScore: 100,
     fileUrl: "/files/file1.pdf",
     createdAt: new Date("2024-10-07"),
@@ -301,14 +301,15 @@ export const mockSubmissions: Submission[] = [
     id: 1,
     assignmentId: 1,
     studentId: 3, // Andika Putra
-    submittedAt: new Date("2025-10-12"),
+    submittedAt: new Date("2025-11-17T14:30:25"),
+    text:"Hellow",
     fileUrl: "/files/file1.pdf",
   },
   {
     id: 2,
     assignmentId: 1,
     studentId: 6,
-    submittedAt: new Date("2025-09-07"),
+    submittedAt: new Date("2025-09-07T09:15:21"),
     fileUrl: "/files/file1.pdf",
   },
 ];

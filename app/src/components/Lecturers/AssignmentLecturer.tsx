@@ -18,12 +18,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Upload, Plus, File, Edit, Trash2 } from "lucide-react";
+import { FileText, Upload, Plus, File, Edit, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { mockAssignments, mockCourses } from "@/utils/mockData";
 import { useNavigate } from "react-router-dom";
 import type { Assignment } from "@/types";
-
 
 interface Props {
   courseId: number;
@@ -37,8 +36,7 @@ export default function AssignmentTab({ courseId }: Props) {
   const course = mockCourses.find((c) => c.id === courseId);
 
   useEffect(() => {
-    // filter hanya tugas untuk mata kuliah ini
-    const filtered = mockAssignments.filter(a => a.courseId === courseId);
+    const filtered = mockAssignments.filter((a) => a.courseId === courseId);
     setAssignments(filtered);
   }, [courseId]);
 
@@ -46,6 +44,7 @@ export default function AssignmentTab({ courseId }: Props) {
     title: "",
     description: "",
     dueDate: "",
+    dueTime: "",
     maxScore: 100,
   });
 
@@ -56,7 +55,7 @@ export default function AssignmentTab({ courseId }: Props) {
   const navigate = useNavigate();
 
   const handleToListSubmission = (assignmentId: number) => {
-    navigate(`/lecturer/submissionStudent/${assignmentId}`)
+    navigate(`/lecturer/submissionStudent/${assignmentId}`);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,27 +67,29 @@ export default function AssignmentTab({ courseId }: Props) {
       toast.success(`File "${selected.name}" berhasil dipilih`);
     }
   };
+
   const handleFileClick = () => fileRef.current?.click();
 
   const handleOpenDialog = (assignment?: Assignment) => {
     if (assignment) {
-      // edit mode
       setEditing(assignment);
+      const date = new Date(assignment.dueDate);
       setFormData({
         title: assignment.title,
         description: assignment.description,
-        dueDate: assignment.dueDate.toISOString().split("T")[0],
+        dueDate: date.toISOString().split("T")[0],
+        dueTime: date.toTimeString().slice(0, 5), // ambil HH:mm
         maxScore: assignment.maxScore,
       });
       setFile(null);
       setFileUrl(assignment.fileUrl || null);
     } else {
-      // create mode
       setEditing(null);
       setFormData({
         title: "",
         description: "",
         dueDate: "",
+        dueTime: "",
         maxScore: 100,
       });
       setFile(null);
@@ -97,35 +98,36 @@ export default function AssignmentTab({ courseId }: Props) {
     setIsDialogOpen(true);
   };
 
-  /** ===================== SAVE (CREATE / UPDATE) ===================== */
+  /** ===================== SAVE ===================== */
   const handleSaveAssignment = () => {
     if (!formData.title || !formData.description || !formData.dueDate) {
       toast.error("Lengkapi semua field tugas!");
       return;
     }
 
+    // 🔹 Gabungkan tanggal dan jam jadi satu objek Date
+    const dueDateTime = formData.dueTime
+      ? new Date(`${formData.dueDate}T${formData.dueTime}`)
+      : new Date(`${formData.dueDate}T23:59`);
+
     if (editing) {
-      // Update
       const updated = {
         ...editing,
         ...formData,
-        dueDate: new Date(formData.dueDate),
-        fileUrl: file ? fileUrl : editing.fileUrl, // tetap pakai file lama jika tidak diganti
+        dueDate: dueDateTime,
+        fileUrl: file ? fileUrl : editing.fileUrl,
       };
       setAssignments((prev) =>
         prev.map((a) => (a.id === editing.id ? updated : a))
       );
       toast.success(`Tugas "${formData.title}" berhasil diperbarui!`);
-
-      setIsDialogOpen(false);
     } else {
-      // Create
       const newAssignment: Assignment = {
         id: Date.now(),
         courseId,
         title: formData.title,
         description: formData.description,
-        dueDate: new Date(formData.dueDate),
+        dueDate: dueDateTime,
         maxScore: formData.maxScore,
         fileUrl,
         createdAt: new Date(),
@@ -140,7 +142,6 @@ export default function AssignmentTab({ courseId }: Props) {
     setFileUrl(null);
   };
 
-  /** ===================== DELETE ===================== */
   const handleDeleteAssignment = (id: number) => {
     if (confirm("Yakin ingin menghapus tugas ini?")) {
       setAssignments((prev) => prev.filter((a) => a.id !== id));
@@ -150,7 +151,7 @@ export default function AssignmentTab({ courseId }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* === Tombol Tambah/Edit === */}
+      {/* === Tombol Tambah === */}
       <div className="flex justify-end items-center">
         <Button
           onClick={() => handleOpenDialog()}
@@ -168,8 +169,8 @@ export default function AssignmentTab({ courseId }: Props) {
       ) : (
         <div className="grid gap-4">
           {assignments.map((a) => (
-            <Card 
-              key={a.id} 
+            <Card
+              key={a.id}
               className="bg-gray-800/50 border-gray-700"
               onClick={() => handleToListSubmission(a.id)}
             >
@@ -180,11 +181,22 @@ export default function AssignmentTab({ courseId }: Props) {
                     <CardTitle className="text-white">{a.title}</CardTitle>
                   </div>
                   <Badge className="bg-gray-600 border-gray-300 text-white">
-                    Deadline: {
-                      new Date(a.dueDate) < new Date()
-                        ? "Selesai"
-                        : new Date(a.dueDate).toLocaleDateString("id-ID") 
-                    }
+                    Deadline:{" "}
+                    {new Date(a.dueDate) < new Date()
+                      ? `${new Date(a.dueDate).toLocaleString("id-ID", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })} (Selesai)`
+                      : new Date(a.dueDate).toLocaleString("id-ID", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                   </Badge>
                 </div>
                 <CardDescription className="text-gray-400">
@@ -201,7 +213,7 @@ export default function AssignmentTab({ courseId }: Props) {
                     className="bg-gray-700 border border-gray-600 text-white"
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.open(a.fileUrl || "#", "_blank")
+                      window.open(a.fileUrl || "#", "_blank");
                     }}
                   >
                     <File className="h-4 w-4" /> {a.title}
@@ -210,9 +222,9 @@ export default function AssignmentTab({ courseId }: Props) {
 
                 <div className="flex justify-end gap-2 mt-2">
                   <Button
-                    onClick={(e) => { 
+                    onClick={(e) => {
                       e.stopPropagation();
-                      handleOpenDialog(a)
+                      handleOpenDialog(a);
                     }}
                     className="bg-amber-700 hover:bg-amber-800 border border-amber-600 flex gap-2"
                   >
@@ -222,7 +234,7 @@ export default function AssignmentTab({ courseId }: Props) {
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteAssignment(a.id)
+                      handleDeleteAssignment(a.id);
                     }}
                     className="bg-red-700 border border-red-600 flex gap-2"
                   >
@@ -235,7 +247,7 @@ export default function AssignmentTab({ courseId }: Props) {
         </div>
       )}
 
-      {/* === DIALOG FORM (CREATE / EDIT) === */}
+      {/* === DIALOG === */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="bg-gray-900 border-gray-700">
           <DialogHeader>
@@ -270,8 +282,9 @@ export default function AssignmentTab({ courseId }: Props) {
             />
 
             <div className="grid grid-cols-3 gap-4">
+              {/* === PILIH TANGGAL === */}
               <div>
-                <Label className="text-gray-200 ">Deadline</Label>
+                <Label className="text-gray-200">Tanggal Deadline</Label>
                 <Input
                   type="date"
                   value={formData.dueDate}
@@ -281,6 +294,23 @@ export default function AssignmentTab({ courseId }: Props) {
                   className="bg-gray-800 border-gray-700 text-white"
                 />
               </div>
+
+              {/* === PILIH JAM (muncul setelah tanggal dipilih) === */}
+              {formData.dueDate && (
+                <div>
+                  <Label className="text-gray-200 flex items-center gap-1">
+                    <Clock size={14} /> Jam Deadline
+                  </Label>
+                  <Input
+                    type="time"
+                    value={formData.dueTime}
+                    onChange={(e) =>
+                      setFormData({ ...formData, dueTime: e.target.value })
+                    }
+                    className="bg-gray-800 border-gray-700 text-white"
+                  />
+                </div>
+              )}
 
               <div>
                 <Label className="text-gray-200">Nilai Maksimal</Label>
@@ -296,26 +326,26 @@ export default function AssignmentTab({ courseId }: Props) {
                   className="bg-gray-800 border-gray-700 text-white"
                 />
               </div>
-
-              <div>
-                <Label className="text-gray-200">Upload File</Label>
-                <input
-                  type="file"
-                  ref={fileRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                <Button
-                  onClick={handleFileClick}
-                  className="bg-gray-800 border border-gray-700 w-full flex gap-2 items-center justify-center"
-                >
-                  <Upload className="h-4 w-4" />
-                  Pilih File
-                </Button>
-              </div>
             </div>
 
-            {/* 🔹 Menampilkan file lama atau baru */}
+            <div>
+              <Label className="text-gray-200">Upload File</Label>
+              <input
+                type="file"
+                ref={fileRef}
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              <Button
+                onClick={handleFileClick}
+                className="bg-gray-800 border border-gray-700 w-full flex gap-2 items-center justify-center"
+              >
+                <Upload className="h-4 w-4" />
+                Pilih File
+              </Button>
+            </div>
+
+            {/* Menampilkan file lama atau baru */}
             {(file || fileUrl) && (
               <div>
                 <Button
@@ -323,7 +353,8 @@ export default function AssignmentTab({ courseId }: Props) {
                   className="bg-gray-800 border border-gray-700 inline-flex text-white"
                   onClick={() => window.open(fileUrl!, "_blank")}
                 >
-                  <File size={16} className="mr-1 text-blue-400" />{file ? file.name : formData.title}
+                  <File size={16} className="mr-1 text-blue-400" />
+                  {file ? file.name : formData.title}
                 </Button>
               </div>
             )}

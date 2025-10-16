@@ -55,7 +55,6 @@ export default function AssignmentTab({ courseId }: Props) {
     description: "",
     dueDate: "",
     dueTime: "",
-    maxScore: 100,
   });
 
   const [file, setFile] = useState<File | null>(null);
@@ -89,7 +88,6 @@ export default function AssignmentTab({ courseId }: Props) {
         description: assignment.description,
         dueDate: date.toISOString().split("T")[0],
         dueTime: date.toTimeString().slice(0, 5), // ambil HH:mm
-        maxScore: assignment.maxScore,
       });
       setFile(null);
       setFileUrl(assignment.fileUrl || null);
@@ -100,7 +98,6 @@ export default function AssignmentTab({ courseId }: Props) {
         description: "",
         dueDate: "",
         dueTime: "",
-        maxScore: 100,
       });
       setFile(null);
       setFileUrl(null);
@@ -138,7 +135,6 @@ export default function AssignmentTab({ courseId }: Props) {
         title: formData.title,
         description: formData.description,
         dueDate: dueDateTime,
-        maxScore: formData.maxScore,
         fileUrl,
         createdAt: new Date(),
       };
@@ -320,18 +316,20 @@ export default function AssignmentTab({ courseId }: Props) {
 
               {/* === NILAI MAKSIMAL === */}
               <div className="w-full">
-                <Label className="text-gray-200">Nilai Maksimal</Label>
+                <Label className="text-gray-200">Upload File</Label>
                 <Input
-                  type="number"
-                  value={formData.maxScore}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      maxScore: parseInt(e.target.value),
-                    })
-                  }
-                  className="bg-gray-800 border-gray-700 text-white"
+                  type="file"
+                  ref={fileRef}
+                  onChange={handleFileChange}
+                  className="hidden"
                 />
+                <Button
+                  onClick={handleFileClick}
+                  className="bg-gray-800 border border-gray-700 w-full flex gap-2 items-center justify-center"
+                >
+                  <Upload className="h-4 w-4" />
+                  Pilih File
+                </Button>
               </div>
 
               {/* === POPUP JAM ANALOG === */}
@@ -364,23 +362,6 @@ export default function AssignmentTab({ courseId }: Props) {
                   </div>
                 </div>
               )}
-            </div>
-
-            <div>
-              <Label className="text-gray-200">Upload File</Label>
-              <input
-                type="file"
-                ref={fileRef}
-                onChange={handleFileChange}
-                className="hidden"
-              />
-              <Button
-                onClick={handleFileClick}
-                className="bg-gray-800 border border-gray-700 w-full flex gap-2 items-center justify-center"
-              >
-                <Upload className="h-4 w-4" />
-                Pilih File
-              </Button>
             </div>
 
             {/* Menampilkan file lama atau baru */}

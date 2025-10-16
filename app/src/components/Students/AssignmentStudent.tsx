@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Clock, FileText, Upload, File, CheckCircle } from "lucide-react";
+import { Calendar, FileText, Upload, File, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { Assignment } from "@/types";
 import { mockCourses } from "@/utils/mockData";
@@ -155,10 +155,6 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  Max Score: {assignment.maxScore}
                 </div>
               </div>
 

@@ -148,7 +148,13 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   Deadline:{" "}
-                  {new Date(assignment.dueDate).toLocaleDateString("id-ID")}
+                  {new Date(assignment.dueDate).toLocaleString("id-ID", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />

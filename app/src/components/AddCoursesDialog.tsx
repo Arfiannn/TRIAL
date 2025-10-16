@@ -21,7 +21,6 @@ import { mockUser, mockMajor, mockFaculty, mockUserApproved } from "@/utils/mock
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import TimeKeeper from "react-timekeeper";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 interface AddCourseDialogProps {
   open: boolean;
@@ -48,44 +47,32 @@ export default function AddCourseDialog({
   const [selectedDay, setSelectedDay] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [isTimePickerOpen, setIsTimePickerOpen] = useState<"start" | "end" | false>(false);
 
   const sksOption = ["2", "3", "4", "5", "6"];
   const semesterOption = Array.from({ length: 7 }, (_, i) => (i + 1).toString());
   const dayOption = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
-  // ✅ Ambil semua fakultas dari dosen
-  const faculties = ["Semua", ...mockFaculty.map((f) => f.name)]
+  // ✅ Ambil fakultas & dosen
+  const faculties = ["Semua", ...mockFaculty.map((f) => f.name)];
   const approvedUserIds = mockUserApproved.map((a) => a.userId);
 
-  // ✅ Ambil dosen yang sesuai fakultas filter
   const lecturers = useMemo(() => {
     return mockUser.filter((u) => {
-      // hanya dosen
       if (u.role !== "dosen") return false;
-
-      // hanya yang sudah di-approved
       if (!approvedUserIds.includes(u.id)) return false;
-
-      // kalau tidak difilter fakultas → tampilkan semua
       if (facultyFilter === "Semua") return true;
 
-      // 🔹 cari jurusan (major) dosen ini
       const major = mockMajor.find((m) => m.id === u.majorId);
       if (!major) return false;
-
-      // 🔹 cari fakultas dari jurusan tersebut
       const faculty = mockFaculty.find((f) => f.id === major.facultyId);
-      if (!faculty) return false;
-
-      // ✅ hanya tampilkan jika nama fakultas cocok dengan filter
-      return faculty.name === facultyFilter;
+      return faculty?.name === facultyFilter;
     });
   }, [facultyFilter, approvedUserIds]);
 
-  // ✅ Ambil jurusan dari mockMajor
   const majors = useMemo(() => mockMajor, []);
 
-  // preload data saat edit
+  // === Preload data untuk edit ===
   useEffect(() => {
     if (editData) {
       setName(editData.name || "");
@@ -104,16 +91,7 @@ export default function AddCourseDialog({
       setSelectedLecturer(lecturer ? lecturer.id.toString() : "");
       setFacultyFilter(faculty?.name || "Semua");
     } else {
-      setName("");
-      setDescription("");
-      setSelectedLecturer("");
-      setFacultyFilter("Semua");
-      setSelectedCredits("");
-      setSelectedSemester("");
-      setSelectedMajor("");
-      setSelectedDay("");
-      setStartTime("");
-      setEndTime("");
+      resetForm();
     }
   }, [editData]);
 
@@ -133,13 +111,18 @@ export default function AddCourseDialog({
       return;
     }
 
-    const lecturerData = mockUser.find(
-      (u) => u.id.toString() === selectedLecturer
-    );
+    // 🔒 Validasi jam
+    const [startH, startM] = startTime.split(":").map(Number);
+    const [endH, endM] = endTime.split(":").map(Number);
+    const startMinutes = startH * 60 + startM;
+    const endMinutes = endH * 60 + endM;
+    if (endMinutes <= startMinutes) {
+      toast.error("Jam selesai harus lebih besar dari jam mulai!");
+      return;
+    }
 
-    const majorData = mockMajor.find(
-      (m) => m.id.toString() === selectedMajor
-    );
+    const lecturerData = mockUser.find((u) => u.id.toString() === selectedLecturer);
+    const majorData = mockMajor.find((m) => m.id.toString() === selectedMajor);
 
     const newCourse = {
       id: isEdit ? editData.id : Date.now(),
@@ -152,7 +135,6 @@ export default function AddCourseDialog({
       day: selectedDay,
       startTime,
       endTime,
-      // ✅ Untuk tampilan cepat (opsional)
       lecturerName: lecturerData?.name,
       major: majorData?.name,
     };
@@ -181,12 +163,8 @@ export default function AddCourseDialog({
   };
 
   useEffect(() => {
-    if (!open) {
-      resetForm(); // dialog ditutup → reset semua field
-    }
+    if (!open) resetForm();
   }, [open]);
-
-
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -209,10 +187,7 @@ export default function AddCourseDialog({
                 <Label className="text-xs text-gray-400 mb-1 block">
                   Filter Fakultas
                 </Label>
-                <Select
-                  value={facultyFilter}
-                  onValueChange={setFacultyFilter}
-                >
+                <Select value={facultyFilter} onValueChange={setFacultyFilter}>
                   <SelectTrigger className="h-8 bg-gray-800 border-gray-600 text-gray-200 text-sm">
                     <SelectValue placeholder="Pilih fakultas" />
                   </SelectTrigger>
@@ -230,16 +205,14 @@ export default function AddCourseDialog({
 
               {lecturers.length > 0 ? (
                 lecturers.map((lecturer) => {
-                  // ✅ Cari nama jurusan berdasarkan majorId
                   const major = mockMajor.find((m) => m.id === lecturer.majorId);
-
                   return (
                     <SelectItem
                       key={lecturer.id}
                       value={lecturer.id.toString()}
                       className="text-white py-2 text-sm flex justify-between"
                     >
-                      {lecturer.name} 
+                      {lecturer.name}
                       <span className="text-gray-400 text-x ml-2">
                         | {major?.name}
                       </span>
@@ -289,10 +262,7 @@ export default function AddCourseDialog({
           <div className="flex flex-row gap-3">
             <div className="space-y-2 w-full">
               <Label className="text-gray-300">Jumlah SKS</Label>
-              <Select
-                value={selectedCredits}
-                onValueChange={setSelectedCredits}
-              >
+              <Select value={selectedCredits} onValueChange={setSelectedCredits}>
                 <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
                   <SelectValue placeholder="Pilih jumlah SKS" />
                 </SelectTrigger>
@@ -308,10 +278,7 @@ export default function AddCourseDialog({
 
             <div className="space-y-2 w-full">
               <Label className="text-gray-300">Semester</Label>
-              <Select
-                value={selectedSemester}
-                onValueChange={setSelectedSemester}
-              >
+              <Select value={selectedSemester} onValueChange={setSelectedSemester}>
                 <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
                   <SelectValue placeholder="Pilih semester" />
                 </SelectTrigger>
@@ -326,7 +293,7 @@ export default function AddCourseDialog({
             </div>
           </div>
 
-          {/* Hari & Waktu */}
+          {/* Hari & Jam */}
           <div className="flex flex-row gap-3">
             <div className="space-y-2 w-full">
               <Label className="text-gray-300">Hari</Label>
@@ -347,59 +314,69 @@ export default function AddCourseDialog({
             <div className="space-y-2 w-full">
               <Label className="text-gray-300">Jam</Label>
               <div className="flex gap-3 items-center">
-                {/* === JAM MULAI === */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full bg-gray-800 border-gray-700 text-white justify-start"
-                    >
-                      {startTime ? startTime : "Pilih Jam Mulai"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    align="start"
-                    side="bottom"
-                    className="bg-gray-900 border border-gray-700 rounded-xl text-white p-0 flex justify-center"
+                {/* Jam Mulai */}
+                <div className="w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full bg-gray-800 border-gray-700 text-white justify-start"
+                    onClick={() => setIsTimePickerOpen("start")}
                   >
-                    <TimeKeeper
-                      time={startTime || "08:00"}
-                      switchToMinuteOnHourSelect
-                      hour24Mode
-                      onChange={(newTime) => setStartTime(newTime.formatted24)}
-                    />
-
-
-                  </PopoverContent>
-                </Popover>
+                    {startTime || "Pilih Jam Mulai"}
+                  </Button>
+                </div>
 
                 <span className="text-gray-400 mt-2">–</span>
 
-                {/* === JAM SELESAI === */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full bg-gray-800 border-gray-700 text-white justify-start"
-                    >
-                      {endTime ? endTime : "Pilih Jam Selesai"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    align="start"
-                    side="bottom"
-                    className="bg-gray-900 border border-gray-700 rounded-xl text-white p-0 flex justify-center"
+                {/* Jam Selesai */}
+                <div className="w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full bg-gray-800 border-gray-700 text-white justify-start"
+                    onClick={() => setIsTimePickerOpen("end")}
                   >
-                    <TimeKeeper
-                      time={endTime || "10:00"}
-                      switchToMinuteOnHourSelect
-                      hour24Mode
-                      onChange={(newTime) => setEndTime(newTime.formatted24)}
-                    />
-
-                  </PopoverContent>
-                </Popover>
+                    {endTime || "Pilih Jam Selesai"}
+                  </Button>
+                </div>
               </div>
+
+              {/* Modal TimeKeeper */}
+              {isTimePickerOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+                  <div className="bg-gray-900 border border-gray-700 rounded-xl p-4 shadow-lg">
+                    <h3 className="text-white mb-3 text-center text-lg font-semibold">
+                      {isTimePickerOpen === "start"
+                        ? "Pilih Jam Mulai"
+                        : "Pilih Jam Selesai"}
+                    </h3>
+
+                    <TimeKeeper
+                      time={
+                        isTimePickerOpen === "start"
+                          ? startTime || "08:00"
+                          : endTime || "10:00"
+                      }
+                      hour24Mode
+                      switchToMinuteOnHourSelect
+                      onChange={(data) => {
+                        const selected = data.formatted24;
+                        if (isTimePickerOpen === "start") {
+                          setStartTime(selected);
+                        } else {
+                          setEndTime(selected);
+                        }
+                      }}
+                      doneButton={() => (
+                        <Button
+                          className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => setIsTimePickerOpen(false)}
+                        >
+                          Simpan Jam
+                        </Button>
+                      )}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

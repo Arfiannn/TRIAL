@@ -18,11 +18,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Upload, Plus, File, Edit, Trash2, Clock } from "lucide-react";
+import { FileText, Upload, Plus, File, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { mockAssignments, mockCourses } from "@/utils/mockData";
 import { useNavigate } from "react-router-dom";
 import type { Assignment } from "@/types";
+import TimeKeeper from "react-timekeeper"
 
 interface Props {
   courseId: number;
@@ -32,13 +33,22 @@ export default function AssignmentTab({ courseId }: Props) {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Assignment | null>(null);
+  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false)
+  const [tempDate, setTempDate] = useState<string>("")
 
   const course = mockCourses.find((c) => c.id === courseId);
 
   useEffect(() => {
-    const filtered = mockAssignments.filter((a) => a.courseId === courseId);
+    const filtered = mockAssignments
+      .filter((a) => a.courseId === courseId)
+      .map((a) => ({
+        ...a,
+        dueDate: new Date(a.dueDate), // pastikan balik ke objek Date
+        createdAt: new Date(a.createdAt),
+      }));
     setAssignments(filtered);
   }, [courseId]);
+
 
   const [formData, setFormData] = useState({
     title: "",
@@ -106,9 +116,9 @@ export default function AssignmentTab({ courseId }: Props) {
     }
 
     // 🔹 Gabungkan tanggal dan jam jadi satu objek Date
-    const dueDateTime = formData.dueTime
-      ? new Date(`${formData.dueDate}T${formData.dueTime}`)
-      : new Date(`${formData.dueDate}T23:59`);
+    const [year, month, day] = formData.dueDate.split("-").map(Number);
+    const [hour, minute] = (formData.dueTime || "23:59").split(":").map(Number);
+    const dueDateTime = new Date(year, month - 1, day, hour, minute);
 
     if (editing) {
       const updated = {
@@ -182,21 +192,19 @@ export default function AssignmentTab({ courseId }: Props) {
                   </div>
                   <Badge className="bg-gray-600 border-gray-300 text-white">
                     Deadline:{" "}
-                    {new Date(a.dueDate) < new Date()
-                      ? `${new Date(a.dueDate).toLocaleString("id-ID", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })} (Selesai)`
-                      : new Date(a.dueDate).toLocaleString("id-ID", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                    {(() => {
+                      const date = new Date(a.dueDate);
+
+                      const formatted = date.toLocaleString("id-ID", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
+
+                      return date < new Date() ? `${formatted} (Selesai)` : formatted;
+                    })()}
                   </Badge>
                 </div>
                 <CardDescription className="text-gray-400">
@@ -281,38 +289,37 @@ export default function AssignmentTab({ courseId }: Props) {
               rows={4}
             />
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="flex flex-row gap-4">
               {/* === PILIH TANGGAL === */}
-              <div>
-                <Label className="text-gray-200">Tanggal Deadline</Label>
-                <Input
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, dueDate: e.target.value })
-                  }
-                  className="bg-gray-800 border-gray-700 text-white"
-                />
-              </div>
-
-              {/* === PILIH JAM (muncul setelah tanggal dipilih) === */}
-              {formData.dueDate && (
-                <div>
-                  <Label className="text-gray-200 flex items-center gap-1">
-                    <Clock size={14} /> Jam Deadline
-                  </Label>
+              <div className="col-span-2 flex gap-2 items-end">
+                <div className="flex-1">
+                  <Label className="text-gray-200">Tanggal Deadline</Label>
                   <Input
-                    type="time"
-                    value={formData.dueTime}
-                    onChange={(e) =>
-                      setFormData({ ...formData, dueTime: e.target.value })
-                    }
-                    className="bg-gray-800 border-gray-700 text-white"
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={(e) => {
+                      const selectedDate = e.target.value;
+                      setTempDate(selectedDate);
+                      setFormData({ ...formData, dueDate: selectedDate });
+                      setIsTimePickerOpen(true); // buka popup jam
+                    }}
+                    className="bg-gray-800 border-gray-700 text-white cursor-pointer"
                   />
                 </div>
-              )}
 
-              <div>
+                {formData.dueTime && (
+                  <Input
+                    type="text"
+                    readOnly
+                    placeholder="--:--"
+                    value={formData.dueTime}
+                    className="w-[90px] bg-gray-800 border-gray-700 text-white text-center cursor-default"
+                  />
+                )}
+              </div>
+
+              {/* === NILAI MAKSIMAL === */}
+              <div className="w-full">
                 <Label className="text-gray-200">Nilai Maksimal</Label>
                 <Input
                   type="number"
@@ -326,6 +333,37 @@ export default function AssignmentTab({ courseId }: Props) {
                   className="bg-gray-800 border-gray-700 text-white"
                 />
               </div>
+
+              {/* === POPUP JAM ANALOG === */}
+              {isTimePickerOpen && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[9999]">
+                  <div className="bg-gray-900 border border-gray-700 rounded-xl p-4 shadow-lg">
+                    <h3 className="text-white mb-3 text-center text-lg font-semibold">
+                      Pilih Jam Deadline
+                    </h3>
+                    <TimeKeeper
+                      time={formData.dueTime || "12:00"}
+                      hour24Mode
+                      switchToMinuteOnHourSelect
+                      onChange={(data) => {
+                        const selectedTime = data.formatted24;
+                        setFormData((prev) => ({
+                          ...prev,
+                          dueTime: selectedTime, // simpan langsung jam (string "HH:mm")
+                        }));
+                      }}
+                      doneButton={() => (
+                        <Button
+                          className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => setIsTimePickerOpen(false)}
+                        >
+                          Simpan Jam
+                        </Button>
+                      )}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>

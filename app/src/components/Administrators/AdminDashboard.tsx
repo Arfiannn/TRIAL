@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockUser, mockCourses, } from '@/utils/mockData';
+import { mockUser, mockCourses, mockUserApproved, } from '@/utils/mockData';
 import { Users, UserCheck, BookOpen, Settings, } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
 import ApprovalsTab from './ApprovalsSection';
@@ -12,13 +11,33 @@ import CoursesTab from './CoursesSection';
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
-  const [pendingApprovals] = useState(mockUser);
+  
+  const approvedUsers = mockUserApproved.map((u) => u.userId);
+
+  const pendingApprovals = mockUser.filter(
+    (u) => !approvedUsers.includes(u.id)
+  );
+
+  const approvedStudents = mockUser.filter(
+    (u) => approvedUsers.includes(u.id) && u.role === "mahasiswa"
+  );
+
+  // 🔹 Ambil daftar semester unik dari mahasiswa aktif
+  const activeSemestersSet = new Set(
+    approvedStudents
+      .filter((s) => s.semester !== undefined && s.semester !== null)
+      .map((s) => s.semester)
+  );
+
+  // 🔹 Konversi ke array kalau ingin digunakan
+  const activeSemesters = Array.from(activeSemestersSet);
+
 
   const stats = {
-    totalUsers: mockUser.length,
+    totalUsers: mockUserApproved.length,
     pendingApprovals: pendingApprovals.length,
     totalCourses: mockCourses.length,
-    activeSemesters: 8
+    activeSemesters: activeSemesters.length
   };
 
   return (

@@ -125,7 +125,7 @@ export const mockUser: User[] = [
     name: 'Budi Hartono',
     password: '12345678',
     role: 'mahasiswa',
-    semester: 1,
+    semester: 2,
     createdAt: new Date('2024-10-03')
   },
   {

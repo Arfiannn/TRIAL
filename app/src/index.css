@@ -82,3 +82,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+.react-timekeeper__done-button {
+  display: none !important;
+}
+
+
+.react-timekeeper__clock {
+  background-color: #111827 !important;
+  color: #f9f9f9 !important;
+}
+
+.react-timekeeper__clock-wrapper {
+  background-color: #111827 !important;
+  color: #ffffff;
+}
+
+.react-timekeeper {
+  background-color: #111827 !important; /* gray-900 */
+  color: #f9fafb !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.react-timekeeper__top,
+.react-timekeeper__top-bar,
+.react-timekeeper .react-timekeeper__top *,
+.react-timekeeper__header {
+  background-color: #111827 !important; /* dark gray */
+  color: #f9fafb !important; /* white */
+  box-shadow: none !important;
+  border: none !important;
+}
+
+

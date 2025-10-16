@@ -20,6 +20,8 @@ import {
 import { mockUser, mockMajor, mockFaculty, mockUserApproved } from "@/utils/mockData";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
+import TimeKeeper from "react-timekeeper";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 interface AddCourseDialogProps {
   open: boolean;
@@ -161,8 +163,30 @@ export default function AddCourseDialog({
         ? `Mata kuliah "${name}" berhasil diperbarui!`
         : `Mata kuliah "${name}" berhasil ditambahkan!`
     );
+    resetForm();
     onClose();
   };
+
+  const resetForm = () => {
+    setName("");
+    setDescription("");
+    setSelectedLecturer("");
+    setFacultyFilter("Semua");
+    setSelectedCredits("");
+    setSelectedSemester("");
+    setSelectedMajor("");
+    setSelectedDay("");
+    setStartTime("");
+    setEndTime("");
+  };
+
+  useEffect(() => {
+    if (!open) {
+      resetForm(); // dialog ditutup → reset semua field
+    }
+  }, [open]);
+
+
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -322,20 +346,59 @@ export default function AddCourseDialog({
 
             <div className="space-y-2 w-full">
               <Label className="text-gray-300">Jam</Label>
-              <div className="flex gap-2">
-                <Input
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="bg-gray-800 border-gray-700 text-white"
-                />
+              <div className="flex gap-3 items-center">
+                {/* === JAM MULAI === */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full bg-gray-800 border-gray-700 text-white justify-start"
+                    >
+                      {startTime ? startTime : "Pilih Jam Mulai"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="start"
+                    side="bottom"
+                    className="bg-gray-900 border border-gray-700 rounded-xl text-white p-0 flex justify-center"
+                  >
+                    <TimeKeeper
+                      time={startTime || "08:00"}
+                      switchToMinuteOnHourSelect
+                      hour24Mode
+                      onChange={(newTime) => setStartTime(newTime.formatted24)}
+                    />
+
+
+                  </PopoverContent>
+                </Popover>
+
                 <span className="text-gray-400 mt-2">–</span>
-                <Input
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="bg-gray-800 border-gray-700 text-white"
-                />
+
+                {/* === JAM SELESAI === */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full bg-gray-800 border-gray-700 text-white justify-start"
+                    >
+                      {endTime ? endTime : "Pilih Jam Selesai"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="start"
+                    side="bottom"
+                    className="bg-gray-900 border border-gray-700 rounded-xl text-white p-0 flex justify-center"
+                  >
+                    <TimeKeeper
+                      time={endTime || "10:00"}
+                      switchToMinuteOnHourSelect
+                      hour24Mode
+                      onChange={(newTime) => setEndTime(newTime.formatted24)}
+                    />
+
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </div>

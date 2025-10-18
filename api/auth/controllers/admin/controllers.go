@@ -45,3 +45,21 @@ func LoginAdmin(c *gin.Context) {
 		"user":  user,
 	})
 }
+
+func ApproveUser(c *gin.Context) {
+	var input struct {
+		PendingID uint `json:"pending_id" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := models.ApproveUser(input.PendingID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Approval failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User approved successfully"})
+}

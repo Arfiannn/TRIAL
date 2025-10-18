@@ -109,3 +109,24 @@ func GetSubmissionByID(c *gin.Context) {
 		"file_type":     sub.FileType,
 	})
 }
+
+func GetSubmissionFile(c *gin.Context) {
+	id := c.Param("id")
+	var sub models.Submission
+	if err := config.DB.First(&sub, "id_submission = ?", id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File submission tidak ditemukan"})
+		return
+	}
+	if len(sub.FileURL) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File kosong"})
+		return
+	}
+
+	ctype := sub.FileType
+	if ctype == "" {
+		ctype = "application/octet-stream"
+	}
+
+	c.Header("Content-Disposition", "inline")
+	c.Data(http.StatusOK, ctype, sub.FileURL)
+}

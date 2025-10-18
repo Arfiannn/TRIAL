@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 import { mockUser, mockUserApproved, mockMajor } from "@/utils/mockData"; // ⬅️ ambil semua sumber
 import DetailDialog from "@/components/DetailDialog";
+import ValidationDialog from "../ValidationDialog";
 
 export default function StudentsTab() {
   // ✅ Ambil hanya mahasiswa yang sudah disetujui (ada di userApprove)
@@ -33,6 +34,8 @@ export default function StudentsTab() {
   const [majorFilter, setMajorFilter] = useState<string>("Semua");
   const [semesterFilter, setSemesterFilter] = useState<string>("Semua");
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedStuSem, setSelectedStuSem] = useState<any>(null);
+  const [openSemesterDialog, setOpenSemesterDialog] = useState(false);
 
   // ✅ Ambil daftar major dari mockMajor
   const availableMajors = ["Semua", ...mockMajor.map((m) => m.name)];
@@ -143,10 +146,12 @@ export default function StudentsTab() {
                   </Badge>
                   <Button
                     size="sm"
+                    disabled={(student.semester ?? 1) >= 14}
                     className="bg-blue-800 hover:bg-blue-600"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleNaikSemester(student.id);
+                      setSelectedStuSem(student)
+                      setOpenSemesterDialog(true);
                     }}
                   >
                     <MoveUp className="mr-2 h-4 w-4" />
@@ -163,6 +168,24 @@ export default function StudentsTab() {
           </Card>
         );
       })}
+
+      <ValidationDialog
+        open={openSemesterDialog}
+        title={
+          selectedStuSem
+            ? `Apakah Anda yakin menaikkan ${selectedStuSem.name} ke semester ${(selectedStuSem.semester ?? 1) + 1}?`
+            : "Konfirmasi Kenaikan Semester"
+        }
+        onClose={() => setOpenSemesterDialog(false)}
+        onVal={() => {
+          if (selectedStuSem) {
+            handleNaikSemester(selectedStuSem.id);
+          }
+          setOpenSemesterDialog(false);
+        }}
+        confir
+        valName="Naik"
+      />
 
       {/* Jika kosong */}
       {filteredStudents.length === 0 && (

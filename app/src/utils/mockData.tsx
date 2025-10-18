@@ -1,4 +1,4 @@
-import type { Assignment, Course, Faculty,  Major, Material, Submission, User, UserApproved,  } from "@/types";
+import type { Assignment, Course, Faculty,  Major, Material, Role, Submission, User, UserApproved,  } from "@/types";
 
 export const mockFaculty: Faculty[] = [
   {
@@ -17,6 +17,21 @@ export const mockFaculty: Faculty[] = [
     id: 4,
     name: "Ekonomi dan Bisnis"
   },
+]
+
+export const mockRole: Role[] = [
+  {
+    id: 1,
+    name: "Administator"
+  },
+  {
+    id: 2,
+    name: "Dosen"
+  },
+  {
+    id: 3,
+    name: "Mahasiswa"
+  }
 ]
 
 export const mockMajor: Major[] = [
@@ -225,7 +240,6 @@ export const mockAssignments: Assignment[] = [
     description:
       "Buat program sederhana yang menampilkan 'Hello World' dalam berbagai bahasa pemrograman (Python, Java, C, dan Go).",
     dueDate: new Date("2025-10-16T23:59:00"),
-    maxScore: 100,
     fileUrl: "/files/file1.pdf",
     createdAt: new Date("2024-10-01"),
   },
@@ -236,7 +250,6 @@ export const mockAssignments: Assignment[] = [
     description:
       "Implementasikan struktur kontrol if-else dan switch dalam program interaktif yang meminta input dari pengguna.",
     dueDate: new Date("2025-11-01T23:59:00"),
-    maxScore: 100,
     fileUrl: "/files/file1.pdf",
     createdAt: new Date("2024-10-10"),
   },
@@ -247,7 +260,6 @@ export const mockAssignments: Assignment[] = [
     description:
       "Selesaikan soal-soal mengenai logika proposisi, konjungsi, disjungsi, implikasi, dan buat tabel kebenaran untuk setiap kasus.",
     dueDate: new Date("2025-10-25T23:59:00"),
-    maxScore: 100,
     fileUrl: "/files/file1.pdf",
     createdAt: new Date("2024-09-30"),
   },
@@ -258,7 +270,6 @@ export const mockAssignments: Assignment[] = [
     description:
       "Buat implementasi struktur data Stack dan Queue menggunakan bahasa pemrograman pilihan Anda.",
     dueDate: new Date("2025-10-28T23:59:00"),
-    maxScore: 100,
     fileUrl: "/files/file1.pdf",
     createdAt: new Date("2024-10-05"),
   },
@@ -269,7 +280,6 @@ export const mockAssignments: Assignment[] = [
     description:
       "Rancang ERD untuk sistem perpustakaan dan lakukan normalisasi hingga bentuk normal ke-3.",
     dueDate: new Date("2025-11-05T23:59:00"),
-    maxScore: 100,
     fileUrl: "/files/file1.pdf",
     createdAt: new Date("2024-10-07"),
   },
@@ -281,7 +291,6 @@ export const mockMaterials: Material[] = [
     courseId: 1,
     title: 'Pengenalan Python',
     description: 'Materi pengenalan bahasa pemrograman Python untuk pemula',
-    createdBy: 1,
     fileUrl: "/files/file1.pdf",
     createdAt: new Date('2024-09-15')
   },
@@ -290,7 +299,6 @@ export const mockMaterials: Material[] = [
     courseId: 2,
     title: 'Variabel dan Tipe Data',
     description: 'Penjelasan tentang variabel dan berbagai tipe data dalam Python',
-    createdBy: 1,
     fileUrl: "/files/file1.pdf",
     createdAt: new Date('2024-09-20')
   }

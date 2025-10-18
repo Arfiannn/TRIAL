@@ -25,12 +25,16 @@ import { CheckCircle, XCircle, UserCheck } from "lucide-react";
 import { mockUser, mockUserApproved, mockMajor } from "@/utils/mockData"; // ✅ tambah mockMajor
 import { toast } from "sonner";
 import DetailDialog from "@/components/DetailDialog";
+import ValidationDialog from "../ValidationDialog";
 
 export default function ApprovalsTab() {
   const [roleFilter, setRoleFilter] = useState<"mahasiswa" | "dosen">("mahasiswa");
   const [majorFilter, setMajorFilter] = useState<string>("Semua");
   const [user, setUser] = useState(mockUser);
   const [selected, setSelected] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [openApvDialog, setOpenApvDialog] = useState(false);
+  const [openDelDialog, setOpenDelDialog] = useState(false);
 
   // ✅ Ambil semua userId yang sudah disetujui
   const approvedUserIds = mockUserApproved.map((u) => u.userId);
@@ -150,24 +154,45 @@ export default function ApprovalsTab() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleApproveUser(approval.id, approval.name);
+                          setSelectedUser(approval);
+                          setOpenApvDialog(true);
                         }}
                         className="bg-green-600 hover:bg-green-700"
                       >
                         <CheckCircle className="h-4 w-4" />
                         Setujui
                       </Button>
+
+                      <ValidationDialog 
+                        open={openApvDialog}
+                        title={`Apakah Anda Yakin Menyetujui ${selectedUser?.name ?? ""}? `}
+                        onClose={() => setOpenApvDialog(false)}
+                        onVal={() => handleApproveUser(selectedUser.id, selectedUser.name)}
+                        valName="Setujui"
+                        confir
+                      />
+
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleRejectUser(approval.id, approval.name);
+                          setSelectedUser(approval);
+                          setOpenDelDialog(true);
                         }}
                       >
                         <XCircle className="h-4 w-4" />
                         Tolak
                       </Button>
+
+                      <ValidationDialog 
+                        open={openDelDialog}
+                        title={`Apakah Anda Yakin Menghapus ${selectedUser?.name ?? ""}? `}
+                        onClose={() => setOpenDelDialog(false)}
+                        onVal={() => handleRejectUser(selectedUser.id, selectedUser.name)}
+                        valName="Hapus"
+                      />
+
                     </div>
                   </div>
                 </CardContent>
@@ -234,20 +259,47 @@ export default function ApprovalsTab() {
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        onClick={() => handleApproveUser(approval.id, approval.name)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedUser(approval)
+                          setOpenApvDialog(true);
+                        }}
                         className="bg-green-600 hover:bg-green-700"
                       >
                         <CheckCircle className="h-4 w-4" />
                         Setujui
                       </Button>
+
+                      <ValidationDialog 
+                        open={openApvDialog}
+                        title={`Apakah Anda Yakin Menyetujui ${selectedUser?.name ?? ""}? `}
+                        onClose={() => setOpenApvDialog(false)}
+                        onVal={() => handleApproveUser(selectedUser.id, selectedUser.name)}
+                        valName="Setujui"
+                        confir={true}
+                      />
+
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => handleRejectUser(approval.id, approval.name)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedUser(approval)
+                          setOpenDelDialog(true);
+                        }}
                       >
                         <XCircle className="h-4 w-4" />
                         Tolak
                       </Button>
+
+                      <ValidationDialog 
+                        open={openDelDialog}
+                        title={`Apakah Anda Yakin Menghapus ${selectedUser?.name ?? ""}? `}
+                        onClose={() => setOpenDelDialog(false)}
+                        onVal={() => handleRejectUser(selectedUser.id, selectedUser.name)}
+                        valName="Hapus"
+                      />
+
                     </div>
                   </div>
                 </CardContent>

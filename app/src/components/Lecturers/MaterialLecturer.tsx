@@ -19,28 +19,20 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { BookOpen, Upload, Plus, FileText, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { mockMaterials } from "@/utils/mockData";
+import { mockCourses, mockMaterials } from "@/utils/mockData";
 import { useAuth } from "@/components/auth/AuthContext";
-
-interface Material {
-  id: number;
-  courseId: number;
-  title: string;
-  description: string;
-  file?: File | null;
-  fileUrl?: string | null;
-  createdAt: Date;
-  createdBy?: number;
-}
+import ValidationDialog from "../ValidationDialog";
+import type { Material } from "@/types";
 
 interface Props {
   courseId: number;
-  courseName: string;
 }
 
-export default function MaterialTab({ courseId, courseName }: Props) {
+export default function MaterialTab({ courseId }: Props) {
   const { user } = useAuth();
   const [materials, setMaterials] = useState<Material[]>([]);
+
+  const course = mockCourses.find((c) => c.id === courseId)
 
   useEffect(() => {
     const filtered = mockMaterials.filter(m => m.courseId === courseId);
@@ -56,6 +48,8 @@ export default function MaterialTab({ courseId, courseName }: Props) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Material | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false); 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -115,10 +109,8 @@ export default function MaterialTab({ courseId, courseName }: Props) {
         courseId,
         title: newMaterial.title,
         description: newMaterial.description,
-        file,
         fileUrl,
         createdAt: new Date(),
-        createdBy: user?.id,
       };
       setMaterials((prev) => [...prev, newDataMaterial]);
       toast.success(`Materi "${newMaterial.title}" berhasil dibuat!`);
@@ -132,11 +124,9 @@ export default function MaterialTab({ courseId, courseName }: Props) {
 
   };
 
-  const handleDeleteMaterial = (id: number) => {
-    if (confirm("Yakin ingin menghapus materi ini?")) {
-      setMaterials((prev) => prev.filter((a) => a.id !== id));
-      toast.success("Materi berhasil dihapus!");
-    }
+  const handleDeleteMaterial = (id: number, title: string) => {
+    setMaterials((prev) => prev.filter((a) => a.id !== id));
+    toast.success(`Materi: ${title} berhasil dihapus!`);
   };
 
   return (
@@ -147,7 +137,7 @@ export default function MaterialTab({ courseId, courseName }: Props) {
             <DialogHeader>
               <DialogTitle className="text-white">Tambah Materi Baru</DialogTitle>
               <DialogDescription className="text-gray-400">
-                Tambahkan materi pembelajaran untuk {courseName}
+                Tambahkan materi pembelajaran untuk {course?.name}
               </DialogDescription>
             </DialogHeader>
 
@@ -246,7 +236,7 @@ export default function MaterialTab({ courseId, courseName }: Props) {
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-300 mb-2">{m.description}</p>
-                  {m.file && (
+                  {m.fileUrl && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -266,11 +256,27 @@ export default function MaterialTab({ courseId, courseName }: Props) {
                     </Button>
 
                     <Button
-                    onClick={() => handleDeleteMaterial(m.id)}
+                      onClick={() => {
+                        setSelectedMaterial(m)
+                        setOpenDeleteDialog(true)
+                      }}
                       className="bg-red-700 border border-red-600 flex gap-2"
                     >
                       <Trash2 className="h-4 w-4" /> Hapus
                     </Button>
+
+                    <ValidationDialog 
+                      title={`Apakah anda yakin Menghapus Materi: ${selectedMaterial?.title ?? ""}? `}
+                      open={openDeleteDialog}
+                      onClose={() => setOpenDeleteDialog(false)}
+                      onVal={() => {
+                        if (selectedMaterial) {
+                          handleDeleteMaterial(selectedMaterial.id, selectedMaterial.title);
+                        }
+                        setOpenDeleteDialog(false);
+                      }}
+                      valName="Hapus"
+                    />
                   </div>
                 </CardContent>
               </Card>

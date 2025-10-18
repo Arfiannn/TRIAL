@@ -80,7 +80,7 @@ export default function DetailCourseLecturer() {
         </TabsContent>
 
         <TabsContent value="material">
-          <MaterialTab courseId={course.id} courseName={course.name} />
+          <MaterialTab courseId={course.id} />
         </TabsContent>
 
         <TabsContent value="participant" className="space-y-4">

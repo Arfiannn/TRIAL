@@ -5,11 +5,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import AddCourseDialog from "@/components/AddCoursesDialog";
+import ValidationDialog from "../ValidationDialog";
 
 export default function CoursesTab() {
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [editData, setEditData] = useState<any>(null);
   const [courses, setCourses] = useState(mockCourses);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
   const handleAddCourse = (course: any) => {
     // Jika sedang edit → replace data
@@ -26,9 +29,9 @@ export default function CoursesTab() {
     setOpenAddDialog(true);
   };
 
-  const deleteCourse = (id: number) => {
+  const deleteCourse = (id: number, name: string) => {
     setCourses((prev) => prev.filter((c) => c.id !== id));
-    toast.warning("Mata kuliah berhasil dihapus!");
+    toast.warning(`Mata kuliah: ${name} berhasil dihapus!`);
   };
 
   return (
@@ -128,11 +131,25 @@ export default function CoursesTab() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => deleteCourse(course.id)}
+                    onClick={() => {
+                      setSelectedCourse(course)
+                      setOpenDeleteDialog(true)}
+                    }
                     className="border-red-600 bg-red-600 text-white hover:bg-red-700"
                   >
                     Hapus
                   </Button>
+
+                  <ValidationDialog 
+                    title={`Apakah Anda Yakin MengHapus Mata Kuliah: ${selectedCourse?.name ?? ""}?`}
+                    open={openDeleteDialog}
+                    onClose={() => setOpenDeleteDialog(false)}
+                    onVal={() => {
+                      deleteCourse(selectedCourse.id, selectedCourse.name)
+                      setOpenDeleteDialog(false);
+                    }}
+                    valName="Hapus"
+                  />
                 </div>
               </CardContent>
             </Card>

@@ -21,6 +21,7 @@ func SetupRouter() *gin.Engine {
 	}))
 
 	r.POST("/assignments", controllers.CreateAssignment)
+	r.GET("/assignments", controllers.GetAllAssignments)
 
 	return r
 }

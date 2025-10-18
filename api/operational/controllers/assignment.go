@@ -55,3 +55,14 @@ func CreateAssignment(c *gin.Context) {
 		"message": "Tugas berhasil dibuat",
 	})
 }
+
+func GetAllAssignments(c *gin.Context) {
+	var assignments []models.Assignment
+
+	if err := config.DB.Find(&assignments).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data"})
+		return
+	}
+
+	c.JSON(http.StatusOK, assignments)
+}

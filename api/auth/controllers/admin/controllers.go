@@ -72,3 +72,12 @@ func GetPendingUsers(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"pending_users": pendings})
 }
+
+func GetActiveUsers(c *gin.Context) {
+	users, err := models.GetAllActiveUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch active users"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"active_users": users})
+}

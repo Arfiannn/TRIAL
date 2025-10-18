@@ -1,12 +1,14 @@
 package models
 
+import "time"
+
 type Material struct {
-	IDMaterial  uint   `gorm:"primaryKey;column:id_material"`
-	CourseID    uint   `gorm:"not null;column:courseId"`
-	Title       string `gorm:"not null;column:title"`
-	Description string `gorm:"column:description"`
-	FileURL     string `gorm:"column:file_url"`
-	CreatedAt   string `gorm:"not null;column:created_at"`
+	IDMaterial  uint      `gorm:"primaryKey;column:id_material"`
+	CourseID    uint      `gorm:"not null;column:courseId"`
+	Title       string    `gorm:"not null;column:title"`
+	Description string    `gorm:"column:description"`
+	FileURL     string    `gorm:"column:file_url"`
+	CreatedAt   time.Time `gorm:"not null;column:created_at"`
 }
 
 func (Material) TableName() string {

@@ -12,11 +12,6 @@ type Course struct {
 	Day         string `gorm:"column:day"`
 	StartTime   string `gorm:"column:start_time"`
 	EndTime     string `gorm:"column:end_time"`
-
-	Admin    User        `gorm:"foreignKey:AdminID;references:IDUser"`
-	Lecturer User        `gorm:"foreignKey:LecturerID;references:IDUser"`
-	Major    Major       `gorm:"foreignKey:MajorID;references:IDMajor"`
-	Material []Material  `gorm:"foreignKey:CourseID;references:IDCourse"` 
 }
 
 func (Course) TableName() string {

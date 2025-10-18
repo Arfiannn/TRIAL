@@ -29,6 +29,6 @@ func SetupRouter() *gin.Engine {
 
 	r.POST("/submission", controllers.CreateSubmission)
 	r.GET("/submission", controllers.GetAllSubmission)
-
+	r.GET("/submission/:id", controllers.GetSubmissionByID)
 	return r
 }

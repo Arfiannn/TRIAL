@@ -90,3 +90,22 @@ func GetAllSubmission(c *gin.Context) {
 
 	c.JSON(http.StatusOK, list)
 }
+
+func GetSubmissionByID(c *gin.Context) {
+	id := c.Param("id")
+	var sub models.Submission
+	if err := config.DB.First(&sub, "id_submission = ?", id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Submission tidak ditemukan"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"id_submission": sub.ID,
+		"assignmentId":  sub.AssignmentID,
+		"studentId":     sub.StudentID,
+		"description":   sub.Description,
+		"status":        sub.Status,
+		"submitted_at":  sub.SubmittedAt,
+		"file_type":     sub.FileType,
+	})
+}

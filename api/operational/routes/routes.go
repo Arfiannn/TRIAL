@@ -23,6 +23,7 @@ func SetupRouter() *gin.Engine {
 	r.POST("/assignments", controllers.CreateAssignment)
 	r.GET("/assignments", controllers.GetAllAssignments)
 	r.GET("/assignments/:id", controllers.GetAssignmentByID)
+	r.PUT("/assignments/:id", controllers.UpdateAssignment)
 
 	return r
 }

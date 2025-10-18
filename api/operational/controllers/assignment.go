@@ -78,3 +78,47 @@ func GetAssignmentByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, assignment)
 }
+
+func UpdateAssignment(c *gin.Context) {
+	id := c.Param("id")
+	var assignment models.Assignment
+
+	if err := config.DB.First(&assignment, "id_assignment = ?", id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Tugas tidak ditemukan"})
+		return
+	}
+
+	title := c.PostForm("title")
+	description := c.PostForm("description")
+	deadlineStr := c.PostForm("deadline")
+
+	if title != "" {
+		assignment.Title = title
+	}
+	if description != "" {
+		assignment.Description = description
+	}
+	if deadlineStr != "" {
+		if d, err := time.Parse("2006-01-02T15:04:05", deadlineStr); err == nil {
+			assignment.Deadline = d
+		}
+	}
+
+	file, err := c.FormFile("file_url")
+	if err == nil {
+		openedFile, err := file.Open()
+		if err == nil {
+			defer openedFile.Close()
+			fileBytes, _ := io.ReadAll(openedFile)
+			assignment.FileURL = fileBytes
+			assignment.FileType = file.Header.Get("Content-Type")
+		}
+	}
+
+	if err := config.DB.Save(&assignment).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal update tugas"})
+		return
+	}
+
+	c.JSON(http.StatusOK, assignment)
+}

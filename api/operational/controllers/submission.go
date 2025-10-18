@@ -67,3 +67,26 @@ func CreateSubmission(c *gin.Context) {
 		"message": "Tugas berhasil dikumpulkan",
 	})
 }
+
+func GetAllSubmission(c *gin.Context) {
+	var submissions []models.Submission
+	if err := config.DB.Find(&submissions).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data"})
+		return
+	}
+
+	var list []gin.H
+	for _, s := range submissions {
+		list = append(list, gin.H{
+			"id_submission": s.ID,
+			"assignmentId":  s.AssignmentID,
+			"studentId":     s.StudentID,
+			"description":   s.Description,
+			"status":        s.Status,
+			"submitted_at":  s.SubmittedAt,
+			"file_type":     s.FileType,
+		})
+	}
+
+	c.JSON(http.StatusOK, list)
+}

@@ -28,6 +28,7 @@ func SetupRouter() *gin.Engine {
 	r.GET("/assignments/:id/file", controllers.GetAssignmentFile)
 
 	r.POST("/submission", controllers.CreateSubmission)
+	r.GET("/submission", controllers.GetAllSubmission)
 
 	return r
 }

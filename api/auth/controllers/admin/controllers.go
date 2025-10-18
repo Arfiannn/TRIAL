@@ -96,4 +96,20 @@ func DeletePendingUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Pending user deleted successfully"})
+} 
+
+func DeleteUser(c *gin.Context) {
+	userID := c.Param("id")
+	id, err := strconv.ParseUint(userID, 10, 32) // ✅ SIMPAN HASILNYA KE `id`
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	if err := config.DB.Unscoped().Delete(&models.User{}, uint(id)).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }

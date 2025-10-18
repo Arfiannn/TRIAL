@@ -38,4 +38,71 @@ func RegisterUserPending(name, email, password string, roleID, facultyID, majorI
 		MajorID:   majorID,
 	}
 	return config.DB.Create(&pending).Error
+}  
+
+func ApproveUser(pendingID uint) error {
+	var pending UserPending
+	if err := config.DB.Where("id_pending = ?", pendingID).Take(&pending).Error; err != nil {
+		return err // Akan return "record not found" jika ID tidak ada
+	}
+
+	semester := 1
+	if pending.RoleID == 2 {
+		semester = 0
+	}
+
+	user := User{
+		Name:      pending.Name,
+		Email:     pending.Email,
+		Password:  pending.Password,
+		Semester:  semester,
+		RoleID:    pending.RoleID,
+		FacultyID: pending.FacultyID,
+		MajorID:   pending.MajorID,
+	}
+
+	tx := config.DB.Begin()
+	if err := tx.Create(&user).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.Delete(&pending).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit().Error
+}
+
+func GetUserByEmail(email string) (*User, error) {
+	var user User
+	err := config.DB.Where("email = ?", email).First(&user).Error
+	return &user, err
+}
+
+func GetAllPendingUsers() ([]UserPending, error) {
+	var pendings []UserPending
+	err := config.DB.Find(&pendings).Error
+	return pendings, err
+}
+
+func GetAllActiveUsers() ([]User, error) {
+	var users []User
+	err := config.DB.Find(&users).Error
+	return users, err
+}
+
+// Cek apakah email sudah ada di user ATAU user_pending
+func IsEmailExists(email string) (bool, error) {
+
+	var userCount int64
+	config.DB.Model(&User{}).Where("email = ?", email).Count(&userCount)
+
+	var pendingCount int64
+	config.DB.Model(&UserPending{}).Where("email = ?", email).Count(&pendingCount)
+
+	return userCount > 0 || pendingCount > 0, nil
+}
+
+func DeletePendingUser(pendingID uint) error {
+	return config.DB.Delete(&UserPending{}, pendingID).Error
 }

@@ -131,3 +131,21 @@ func DeleteAssignment(c *gin.Context) {
 	}
 	c.Status(http.StatusNoContent)
 }
+
+func GetAssignmentFile(c *gin.Context) {
+	id := c.Param("id")
+	var assignment models.Assignment
+
+	if err := config.DB.First(&assignment, "id_assignment = ?", id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Tugas tidak ditemukan"})
+		return
+	}
+
+	contentType := assignment.FileType
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	c.Header("Content-Disposition", "inline; filename=assignment-file")
+	c.Data(http.StatusOK, contentType, assignment.FileURL)
+}

@@ -80,4 +80,20 @@ func GetActiveUsers(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"active_users": users})
+} 
+
+func DeletePendingUser(c *gin.Context) {
+	pendingID := c.Param("id")
+	id, err := strconv.ParseUint(pendingID, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid pending ID"})
+		return
+	}
+
+	if err := models.DeletePendingUser(uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete pending user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Pending user deleted successfully"})
 }

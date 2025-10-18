@@ -63,3 +63,12 @@ func ApproveUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "User approved successfully"})
 }
+
+func GetPendingUsers(c *gin.Context) {
+	pendings, err := models.GetAllPendingUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch pending users"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"pending_users": pendings})
+}

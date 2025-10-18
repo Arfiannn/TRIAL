@@ -66,3 +66,15 @@ func GetAllAssignments(c *gin.Context) {
 
 	c.JSON(http.StatusOK, assignments)
 }
+
+func GetAssignmentByID(c *gin.Context) {
+	id := c.Param("id")
+	var assignment models.Assignment
+
+	if err := config.DB.First(&assignment, "id_assignment = ?", id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Tugas tidak ditemukan"})
+		return
+	}
+
+	c.JSON(http.StatusOK, assignment)
+}

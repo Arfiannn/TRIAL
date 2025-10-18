@@ -122,3 +122,12 @@ func UpdateAssignment(c *gin.Context) {
 
 	c.JSON(http.StatusOK, assignment)
 }
+
+func DeleteAssignment(c *gin.Context) {
+	id := c.Param("id")
+	if err := config.DB.Delete(&models.Assignment{}, "id_assignment = ?", id).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal hapus tugas"})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}

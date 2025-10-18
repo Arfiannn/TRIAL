@@ -24,6 +24,7 @@ func SetupRouter() *gin.Engine {
 	r.GET("/assignments", controllers.GetAllAssignments)
 	r.GET("/assignments/:id", controllers.GetAssignmentByID)
 	r.PUT("/assignments/:id", controllers.UpdateAssignment)
+	r.DELETE("/assignments/:id", controllers.DeleteAssignment)
 
 	return r
 }

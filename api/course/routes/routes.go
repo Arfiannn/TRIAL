@@ -9,7 +9,7 @@ func SetupRouter() *gin.Engine {
 }
 
 func SetupRoutes(r *gin.Engine) {
-	api := r.Group("/api")
+	api := r.Group("/")
 
 	AdminRoutes(api.Group("/admin"))
 	LecturerRoutes(api.Group("/lecturer"))

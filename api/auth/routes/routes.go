@@ -38,6 +38,8 @@ func SetupRouter() *gin.Engine {
 		adminRoutes.GET("/users", admin.GetActiveUsers)
 		adminRoutes.DELETE("/pending/:id", admin.DeletePendingUser)
 		adminRoutes.DELETE("/user/:id", admin.DeleteUser)
+
+		adminRoutes.PUT("/user/:id/semester", admin.UpdateUserSemester)
 	}
 
 	return r

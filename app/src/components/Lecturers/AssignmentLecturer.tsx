@@ -24,6 +24,7 @@ import { mockAssignments, mockCourses } from "@/utils/mockData";
 import { useNavigate } from "react-router-dom";
 import type { Assignment } from "@/types";
 import TimeKeeper from "react-timekeeper"
+import ValidationDialog from "../ValidationDialog";
 
 interface Props {
   courseId: number;
@@ -35,6 +36,8 @@ export default function AssignmentTab({ courseId }: Props) {
   const [editing, setEditing] = useState<Assignment | null>(null);
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false)
   const [tempDate, setTempDate] = useState<string>("")
+  const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false); 
 
   const course = mockCourses.find((c) => c.id === courseId);
 
@@ -148,11 +151,9 @@ export default function AssignmentTab({ courseId }: Props) {
     setFileUrl(null);
   };
 
-  const handleDeleteAssignment = (id: number) => {
-    if (confirm("Yakin ingin menghapus tugas ini?")) {
-      setAssignments((prev) => prev.filter((a) => a.id !== id));
-      toast.success("Tugas berhasil dihapus!");
-    }
+  const handleDeleteAssignment = (id: number, title: string) => {
+    setAssignments((prev) => prev.filter((a) => a.id !== id));
+    toast.success(`Tugas: ${title} berhasil dihapus!`);
   };
 
   return (
@@ -238,7 +239,8 @@ export default function AssignmentTab({ courseId }: Props) {
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteAssignment(a.id);
+                      setSelectedAssignment(a)
+                      setOpenDeleteDialog(true);
                     }}
                     className="bg-red-700 border border-red-600 flex gap-2"
                   >
@@ -250,6 +252,20 @@ export default function AssignmentTab({ courseId }: Props) {
           ))}
         </div>
       )}
+
+      <ValidationDialog 
+        title={`Apakah anda Yakin menghapus Tugas: ${selectedAssignment?.title ?? ""}? `}
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+        onVal={() => {
+          if(selectedAssignment) {
+            handleDeleteAssignment(selectedAssignment.id, selectedAssignment.name);
+          }
+          setOpenDeleteDialog(false);
+        }}
+        valName="Hapus"
+      
+      />
 
       {/* === DIALOG === */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

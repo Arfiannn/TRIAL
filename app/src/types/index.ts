@@ -3,6 +3,11 @@ export interface Faculty {
   name: string;
 }
 
+export interface Role {
+  id: number,
+  name: string,
+}
+
 export interface Major {
   id: number;
   facultyId: number;
@@ -29,7 +34,6 @@ export interface Course {
   id: number;
   majorId: number;
   lecturerId?: number;
-  studentId?: number;
   name: string;
   semester: number;
   credits: number; //SKS
@@ -45,7 +49,6 @@ export interface Assignment {
   title: string;
   description: string;
   dueDate: Date;
-  maxScore: number;
   fileUrl: string | null;
   createdAt: Date;
 }
@@ -55,8 +58,7 @@ export interface Material {
   courseId: number;
   title: string;
   description: string;
-  fileUrl: string;
-  createdBy: number;
+  fileUrl: string | null;
   createdAt: Date;
 }
 

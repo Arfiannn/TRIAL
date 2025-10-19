@@ -393,15 +393,15 @@ export default function AddCourseDialog({
         </div>
 
         <DialogFooter className="mt-4">
-          <Button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">
-            {isEdit ? "Simpan Perubahan" : "Simpan"}
-          </Button>
           <Button
             variant="outline"
             onClick={onClose}
             className="border-gray-600 text-black hover:bg-gray-700"
           >
             Batal
+          </Button>
+          <Button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">
+            {isEdit ? "Simpan Perubahan" : "Simpan"}
           </Button>
         </DialogFooter>
       </DialogContent>

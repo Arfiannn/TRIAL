@@ -12,6 +12,48 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func RegisterAdmin(c *gin.Context) {
+	var input struct {
+		Name     string `json:"name" binding:"required"`
+		Email    string `json:"email" binding:"required,email"`
+		Password string `json:"password" binding:"required,min=6"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if exists, _ := models.IsEmailExists(input.Email); exists {
+		c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		return
+	}
+
+
+	adminUser := models.User{
+		Name:      input.Name,
+		Email:     input.Email,
+		Password:  string(hashedPassword),
+		Semester:  0,        
+		RoleID:    1,       
+		FacultyID: 1,        
+		MajorID:   1,        
+	}
+
+	if err := config.DB.Create(&adminUser).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register admin"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Admin registered successfully."})
+}
+
 func LoginAdmin(c *gin.Context) {
 	var input struct {
 		Email    string `json:"email" binding:"required,email"`
@@ -80,7 +122,7 @@ func GetActiveUsers(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"active_users": users})
-} 
+}
 
 func DeletePendingUser(c *gin.Context) {
 	pendingID := c.Param("id")
@@ -96,7 +138,7 @@ func DeletePendingUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Pending user deleted successfully"})
-} 
+}
 
 func DeleteUser(c *gin.Context) {
 	userID := c.Param("id")

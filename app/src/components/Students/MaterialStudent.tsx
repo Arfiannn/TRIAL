@@ -2,15 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "../ui
 import { Button } from "../ui/button";
 import { BookOpen, FileText } from "lucide-react";
 import { toast } from "sonner";
-
-export interface Material {
-  id: number;
-  courseId: number;
-  title: string;
-  description: string;
-  createdAt: Date;
-  fileUrl: string;
-}
+import type { Material } from "@/types";
 
 interface MaterialListProps {
   materials: Material[];

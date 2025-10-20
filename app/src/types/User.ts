@@ -1,5 +1,5 @@
 export interface User {
-  id: number;
+  id_user: number;
   roleId: number;
   facultyId?: number
   majorId?: number;

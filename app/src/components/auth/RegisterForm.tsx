@@ -187,8 +187,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700 text-white">
                   {faculties.map((f) => (
-                    <SelectItem key={f.id} value={f.id.toString()}>
-                      {f.name}
+                    <SelectItem key={f.id_faculty} value={f.id_faculty.toString()}>
+                      {f.name_faculty}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -204,8 +204,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-700 text-white">
                     {filteredMajors.map((m) => (
-                      <SelectItem key={m.id} value={m.id.toString()}>
-                        {m.name}
+                      <SelectItem key={m.id_major} value={m.id_major.toString()}>
+                        {m.name_major}
                       </SelectItem>
                     ))}
                   </SelectContent>

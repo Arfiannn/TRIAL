@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,34 +17,53 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { mockUser, mockUserApproved, mockMajor } from "@/utils/mockData"; // ⬅️ ambil semua sumber
 import DetailDialog from "@/components/DetailDialog";
 import ValidationDialog from "../ValidationDialog";
+import type { User } from "@/types/User";
+import type { Major } from "@/types/Major";
+import { getAllUser, updateUserSemester } from "../services/User";
+import { getMajor } from "../services/Major";
 
 export default function StudentsTab() {
-  // ✅ Ambil hanya mahasiswa yang sudah disetujui (ada di userApprove)
-  const approvedUserIds = mockUserApproved.map((u) => u.userId);
-
-  const [students, setStudents] = useState(
-    mockUser.filter(
-      (u) => u.role === "mahasiswa" && approvedUserIds.includes(u.id)
-    )
-  );
 
   const [majorFilter, setMajorFilter] = useState<string>("Semua");
   const [semesterFilter, setSemesterFilter] = useState<string>("Semua");
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const [selectedStuSem, setSelectedStuSem] = useState<any>(null);
+  const [students, setStudents] = useState<User[]>([]);
+  const [majors, setMajors] = useState<Major[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
+  const [selectedStuSem, setSelectedStuSem] = useState<User | null>(null);
   const [openSemesterDialog, setOpenSemesterDialog] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // ✅ Ambil daftar major dari mockMajor
-  const availableMajors = ["Semua", ...mockMajor.map((m) => m.name)];
+  const availableMajors = ["Semua", ...majors.map((m) => m.name_major)];
   const availableSemester = ["Semua", ...Array.from({ length: 14 }, (_, i) => (i + 1).toString())];
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const [users, majors] = await Promise.all([
+          getAllUser(),
+          getMajor()
+        ])
+        const mahasiswa = users.filter((u) => u.roleId === 3);
+        setStudents(mahasiswa);
+        setMajors(majors)
+      } catch (err) {
+        console.error(err);
+        toast.error("Gagal memuat data mahasiswa dan program studi");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   // ✅ Filter mahasiswa berdasarkan majorId dan semester
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
-      const studentMajorName = mockMajor.find((m) => m.id === s.majorId)?.name;
+      const studentMajorName = majors.find((m) => m.id_major === s.majorId)?.name_major;
 
       const matchMajor = majorFilter === "Semua" || studentMajorName === majorFilter;
       const matchSemester =
@@ -56,16 +75,24 @@ export default function StudentsTab() {
   }, [students, majorFilter, semesterFilter]);
 
   // ✅ Fungsi naik semester
-  const handleNaikSemester = (id: number) => {
-    setStudents((prev) =>
-      prev.map((s) =>
-        s.id === id ? { ...s, semester: (s.semester ?? 1) + 1 } : s
-      )
-    );
+  const handleNaikSemester = async (id: number) => {
+    const student = students.find((s) => s.id_user === id);
+    if (!student) return;
 
-    const student = students.find((s) => s.id === id);
-    if (student) {
-      toast.success(`${student.name} naik ke semester ${(student.semester ?? 1) + 1}`);
+    const newSemester = (student.semester ?? 1) + 1;
+
+    try {
+      const updated = await updateUserSemester(id, newSemester);
+
+      // Update state
+      setStudents((prev) =>
+        prev.map((s) => (s.id_user === id ? updated : s))
+      );
+
+      toast.success(`${student.name} naik ke semester ${newSemester}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Gagal menaikkan semester mahasiswa");
     }
   };
 
@@ -124,11 +151,11 @@ export default function StudentsTab() {
 
       {/* Daftar Mahasiswa */}
       {filteredStudents.map((student) => {
-        const majorData = mockMajor.find((m) => m.id === student.majorId);
+        const majorData = majors.find((m) => m.id_major === student.majorId);
 
         return (
           <Card
-            key={student.id}
+            key={student.id_user}
             className="bg-gray-800/50 border-gray-700 mb-3"
             onClick={() => setSelectedStudent(student)}
           >
@@ -137,7 +164,7 @@ export default function StudentsTab() {
                 <div>
                   <CardTitle className="text-white">{student.name}</CardTitle>
                   <CardDescription className="text-gray-400">
-                    {student.email} • {majorData?.name || "Belum memilih jurusan"}
+                    {student.email} • {majorData?.name_major || "Belum memilih jurusan"}
                   </CardDescription>
                 </div>
                 <div className="flex gap-3 items-center">
@@ -161,9 +188,9 @@ export default function StudentsTab() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-400">
+              {/* <p className="text-sm text-gray-400">
                 Mendaftar: {new Date(student.createdAt).toLocaleDateString("id-ID")}
-              </p>
+              </p> */}
             </CardContent>
           </Card>
         );
@@ -179,7 +206,7 @@ export default function StudentsTab() {
         onClose={() => setOpenSemesterDialog(false)}
         onVal={() => {
           if (selectedStuSem) {
-            handleNaikSemester(selectedStuSem.id);
+            handleNaikSemester(selectedStuSem.id_user);
           }
           setOpenSemesterDialog(false);
         }}
@@ -188,7 +215,7 @@ export default function StudentsTab() {
       />
 
       {/* Jika kosong */}
-      {filteredStudents.length === 0 && (
+      {!loading && filteredStudents.length === 0 && (
         <Card className="bg-gray-800/50 border-gray-700">
           <CardContent className="pt-6 text-center">
             <UserCheck className="h-12 w-12 text-gray-500 mx-auto mb-4" />

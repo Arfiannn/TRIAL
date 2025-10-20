@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Select,
   SelectTrigger,
@@ -16,35 +16,61 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { UserCheck } from "lucide-react";
 import DetailDialog from "@/components/DetailDialog";
-import { mockUser, mockMajor, mockFaculty, mockUserApproved } from "@/utils/mockData";
+import type { User } from "@/types/User";
+import type { Faculty } from "@/types/Faculty";
+import { getAllUser } from "../services/User";
+import { getFaculty } from "../services/Faculty";
+import { toast } from "sonner";
+import type { Major } from "@/types/Major";
+import { getMajor } from "../services/Major";
 
 export default function LecturersTab() {
 
-  const approvedUserIds = mockUserApproved.map((u) => u.userId);
 
-  const [lecturer] = useState(
-    mockUser.filter(
-      (u) => u.role === "dosen" && approvedUserIds.includes(u.id)
-    )
-  );
-
+  const [lecturer, setLecturer] = useState<User[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([])
+  const [majors, setMajors] = useState<Major[]>([]);
   const [facultyFilter, setFacultyFilter] = useState<string>("Semua");
-  const [selectedLecturer, setSelectedLecturer] = useState<any>(null);
+  const [selectedLecturer, setSelectedLecturer] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
 
   // ✅ Ambil daftar fakultas dari mockFaculty
-  const availableFaculties = ["Semua", ...mockFaculty.map((f) => f.name)];
+  const availableFaculties = ["Semua", ...faculties.map((f) => f.name_faculty)];
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try{
+        const [users, faculties, majors] = await Promise.all([
+          getAllUser(),
+          getFaculty(),
+          getMajor()
+        ])
+        const dosen = users.filter((u) => u.roleId === 2);
+        setLecturer(dosen);
+        setFaculties(faculties);
+        setMajors(majors)
+      } catch (err) {
+        console.error(err);
+        toast.error("Gagal memuat data dosen dan fakultas");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   // ✅ Filter berdasarkan fakultas
   const filteredLecturer = lecturer.filter((lecturer) => {
     if (facultyFilter === "Semua") return true;
 
     // cari jurusan dosen
-    const major = mockMajor.find((m) => m.id === lecturer.majorId);
+    const major = majors.find((m) => m.id_major === lecturer.majorId);
     if (!major) return false;
 
     // cari fakultas jurusan tersebut
-    const faculty = mockFaculty.find((f) => f.id === major.facultyId);
-    return faculty?.name === facultyFilter;
+    const faculty = faculties.find((f) => f.id_faculty === major.facultyId);
+    return faculty?.name_faculty === facultyFilter;
   });
 
   return (
@@ -79,11 +105,11 @@ export default function LecturersTab() {
       {/* Daftar Dosen */}
       {filteredLecturer.map((lecturer) => {
         // cari jurusan dosen berdasarkan majorId
-        const major = mockMajor.find((m) => m.id === lecturer.majorId);
+        const major = majors.find((m) => m.id_major === lecturer.majorId);
 
         return (
           <Card
-            key={lecturer.id}
+            key={lecturer.id_user}
             className="bg-gray-800/50 border-gray-700 mb-3 hover:border-blue-700 cursor-pointer transition"
             onClick={() => setSelectedLecturer(lecturer)}
           >
@@ -92,7 +118,7 @@ export default function LecturersTab() {
                 <div>
                   <CardTitle className="text-white">{lecturer.name}</CardTitle>
                   <CardDescription className="text-gray-400">
-                    {lecturer.email} • {major?.name || "Belum ada jurusan"}
+                    {lecturer.email} • {major?.name_major || "Belum ada jurusan"}
                   </CardDescription>
                 </div>
                 <Badge
@@ -104,17 +130,17 @@ export default function LecturersTab() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-400">
+              {/* <p className="text-sm text-gray-400">
                 Mendaftar:{" "}
                 {new Date(lecturer.createdAt).toLocaleDateString("id-ID")}
-              </p>
+              </p> */}
             </CardContent>
           </Card>
         );
       })}
 
       {/* Jika kosong */}
-      {filteredLecturer.length === 0 && (
+      {!loading && filteredLecturer.length === 0 && (
         <Card className="bg-gray-800/50 border-gray-700">
           <CardContent className="pt-6 text-center">
             <UserCheck className="h-12 w-12 text-gray-500 mx-auto mb-4" />

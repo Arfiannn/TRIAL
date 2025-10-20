@@ -1,5 +1,5 @@
 export interface Major {
-  id: number;
+  id_major: number;
   facultyId: number;
-  name: string;
+  name_major: string;
 }

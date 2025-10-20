@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Lock, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from './AuthContext';
 import InputWithIcon from '@/components/InputWithIcon';
+import { loginUser } from '../services/Login';
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
@@ -15,37 +15,28 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, isLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
+    setIsLoading(true);
 
-    const success = await login(email, password);
-    if (!success) {
-        setError('Email atau password salah, atau akun belum disetujui admin');
-    } else {
-        navigate('/dashboard');
-    }
-    };
+    try {
+      const data = await loginUser(email, password);
 
-  const fillDemoCredentials = (role: string) => {
-    switch (role) {
-      case 'admin':
-        setEmail('admin@gmail.com');
-        setPassword('12345678');
-        break;
-      case 'dosen':
-        setEmail('Rizky@gmail.com');
-        setPassword('12345678');
-        break;
-      case 'mahasiswa':
-        setEmail('andika@gmail.com');
-        setPassword('12345678');
-        break;
+      // simpan token dan data user di localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }; 
 
   return (
     <Card className="w-full max-w-md bg-[#161B2C] border-gray-800">
@@ -70,16 +61,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             onChange={(e) => setEmail(e.target.value)}
             leftIcon={<Mail size={18} />}
             isEmail
-            />
+          />
 
-            <InputWithIcon
+          <InputWithIcon
             label="Password"
             placeholder="Masukkan password kamu"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             isPassword
             leftIcon={<Lock size={18} />}
-            />
+          />
           
           <Button 
             type="submit" 
@@ -96,39 +87,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             )}
           </Button>
         </form>
-
-        <div className="space-y-2">
-          <p className="text-sm text-gray-400 text-center">Demo Accounts:</p>
-          <div className="flex gap-2">
-            <Button 
-              type="button"
-              variant="outline" 
-              size="sm" 
-              onClick={() => fillDemoCredentials('admin')}
-              className="flex-1 bg-purple-900/50 border-purple-700 text-purple-200 hover:bg-purple-800/50"
-            >
-              Admin
-            </Button>
-            <Button 
-              type="button"
-              variant="outline" 
-              size="sm" 
-              onClick={() => fillDemoCredentials('dosen')}
-              className="flex-1 bg-green-900/50 border-green-700 text-green-200 hover:bg-green-800/50"
-            >
-              Dosen
-            </Button>
-            <Button 
-              type="button"
-              variant="outline" 
-              size="sm" 
-              onClick={() => fillDemoCredentials('mahasiswa')}
-              className="flex-1 bg-blue-900/50 border-blue-700 text-blue-200 hover:bg-blue-800/50"
-            >
-              Mahasiswa
-            </Button>
-          </div>
-        </div>
         
         <div className="flex flex-row item-center justify-center text-blue-400">
             <p>Belum punya akun? {" "}</p>

@@ -5,17 +5,17 @@ import (
 
 	"auth-service/config"
 	"auth-service/models"
-	"auth-service/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func LoginAdmin(c *gin.Context) {
+func RegisterAdmin(c *gin.Context) {
 	var input struct {
+		Name     string `json:"name" binding:"required"`
 		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required"`
+		Password string `json:"password" binding:"required,min=6"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -23,28 +23,36 @@ func LoginAdmin(c *gin.Context) {
 		return
 	}
 
-	user, err := models.GetUserByEmail(input.Email)
-	if err != nil || user.RoleID != 1 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid admin credentials"})
+	if exists, _ := models.IsEmailExists(input.Email); exists {
+		c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
-		return
-	}
-
-	token, err := utils.GenerateToken(user.ID, user.Name, user.Email, user.RoleID)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"token": token,
-		"user":  user,
-	})
+
+	adminUser := models.User{
+		Name:      input.Name,
+		Email:     input.Email,
+		Password:  string(hashedPassword),
+		Semester:  0,        
+		RoleID:    1,       
+		FacultyID: 1,        
+		MajorID:   1,        
+	}
+
+	if err := config.DB.Create(&adminUser).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register admin"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Admin registered successfully."})
 }
+
 
 func ApproveUser(c *gin.Context) {
 	var input struct {
@@ -80,7 +88,7 @@ func GetActiveUsers(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"active_users": users})
-} 
+}
 
 func DeletePendingUser(c *gin.Context) {
 	pendingID := c.Param("id")
@@ -96,7 +104,7 @@ func DeletePendingUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Pending user deleted successfully"})
-} 
+}
 
 func DeleteUser(c *gin.Context) {
 	userID := c.Param("id")

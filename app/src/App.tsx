@@ -31,7 +31,7 @@ const App = () => (
               <Route path="/student/detailcourses/:id" element={<DetailCoursesStudent />} />
             </Route>
 
-            <Route path="*" element={<Navigate to="/auth" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
 
           </Routes>
         </AuthProvider>

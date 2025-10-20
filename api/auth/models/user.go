@@ -4,6 +4,22 @@ import (
 	"auth-service/config"
 )
 
+type Faculty struct {
+	ID   uint   `gorm:"primaryKey;column:id_faculty" json:"id"`
+	Name string `gorm:"column:name_faculty" json:"name"`
+}
+
+
+type Major struct {
+	ID        uint   `gorm:"primaryKey;column:id_major" json:"id"`
+	FacultyID uint   `gorm:"column:facultyId" json:"facultyId"`
+	Name      string `gorm:"column:name_major" json:"name"`
+}
+
+
+func (Faculty) TableName() string { return "faculty" }
+func (Major) TableName() string   { return "major" }
+
 type User struct {
 	ID        uint   `gorm:"primaryKey;autoIncrement;column:id_user" json:"id_user"`
 	Name      string `gorm:"column:name" json:"name"`
@@ -38,12 +54,12 @@ func RegisterUserPending(name, email, password string, roleID, facultyID, majorI
 		MajorID:   majorID,
 	}
 	return config.DB.Create(&pending).Error
-}  
+}
 
 func ApproveUser(pendingID uint) error {
 	var pending UserPending
 	if err := config.DB.Where("id_pending = ?", pendingID).Take(&pending).Error; err != nil {
-		return err // Akan return "record not found" jika ID tidak ada
+		return err
 	}
 
 	semester := 1
@@ -105,4 +121,18 @@ func IsEmailExists(email string) (bool, error) {
 
 func DeletePendingUser(pendingID uint) error {
 	return config.DB.Delete(&UserPending{}, pendingID).Error
+}
+
+
+func GetAllFaculties() ([]Faculty, error) {
+	var faculties []Faculty
+	err := config.DB.Find(&faculties).Error
+	return faculties, err
+}
+
+
+func GetAllMajors() ([]Major, error) {
+	var majors []Major
+	err := config.DB.Find(&majors).Error
+	return majors, err
 }

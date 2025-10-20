@@ -2,6 +2,7 @@ package routes
 
 import (
 	"auth-service/controllers/admin"
+	"auth-service/controllers/auth"
 	"auth-service/controllers/dosen"
 	"auth-service/controllers/mahasiswa"
 	"auth-service/controllers/public"
@@ -24,14 +25,12 @@ func SetupRouter() *gin.Engine {
 	r.GET("/faculties", public.GetFaculties)
 	r.GET("/majors", public.GetMajors)
 
-	auth := r.Group("/auth")
+	authGroup := r.Group("/auth")
 	{
-		auth.POST("/register/mahasiswa", mahasiswa.RegisterMahasiswa)
-		auth.POST("/register/dosen", dosen.RegisterDosen)
-		auth.POST("/register/admin", admin.RegisterAdmin)
-		auth.POST("/login/mahasiswa", mahasiswa.LoginMahasiswa)
-		auth.POST("/login/dosen", dosen.LoginDosen)
-		auth.POST("/login/admin", admin.LoginAdmin)
+		authGroup.POST("/register/mahasiswa", mahasiswa.RegisterMahasiswa)
+		authGroup.POST("/register/dosen", dosen.RegisterDosen)
+		authGroup.POST("/register/admin", admin.RegisterAdmin)
+		authGroup.POST("/login", auth.Login)
 	}
 
 	adminRoutes := r.Group("/admin")

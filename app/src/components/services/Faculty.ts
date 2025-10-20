@@ -1,9 +1,6 @@
 import { BASE_URL } from "@/lib/apiAuth";
+import type { Faculty } from "@/types/Faculty";
 
-export interface Faculty {
-  id: number;
-  name: string;
-}
 
 export async function getFaculty(): Promise<Faculty[]> {
   const res = await fetch(`${BASE_URL}/faculties`);

@@ -1,11 +1,10 @@
 export interface User {
-  id_user: number;
+  id: number;
   roleId: number;
-  facultyId: number
-  majorId: number;
+  facultyId?: number
+  majorId?: number;
   name: string;
   email: string;
   password: string;
   semester: number;
 }
-

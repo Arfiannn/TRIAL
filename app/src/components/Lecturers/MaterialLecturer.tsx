@@ -20,7 +20,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { BookOpen, Upload, Plus, FileText, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { mockCourses, mockMaterials } from "@/utils/mockData";
-import { useAuth } from "@/components/auth/AuthContext";
 import ValidationDialog from "../ValidationDialog";
 import type { Material } from "@/types";
 
@@ -29,7 +28,6 @@ interface Props {
 }
 
 export default function MaterialTab({ courseId }: Props) {
-  const { user } = useAuth();
   const [materials, setMaterials] = useState<Material[]>([]);
 
   const course = mockCourses.find((c) => c.id === courseId)

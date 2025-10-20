@@ -20,6 +20,9 @@ import {
   SelectContent,
 } from "@/components/ui/select";
 import { useAuth } from "./AuthContext";
+import { getFaculty, type Faculty } from "../services/Faculty";
+import { getMajor, type Major } from "../services/Major";
+import { createUserPandingLecturer, createUserPandingStudent } from "../services/UserPending";
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
@@ -38,8 +41,24 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   const [success, setSuccess] = useState(false);
   const { register, isLoading } = useAuth();
 
-  const faculty = useMemo(() => mockFaculty, []);
-  const major = useMemo(() => mockMajor, []);
+  const [faculties, setFaculties] = useState<any[]>([]);
+  const [majors, setMajors] = useState<any[]>([]);
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const facultyData = await getFaculty();
+        const majorData = await getMajor();
+        setFaculties(facultyData);
+        setMajors(majorData);
+      } catch (error) {
+        console.error("Gagal memuat data fakultas atau prodi:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const role = useMemo(() => {
       if (location.pathname.includes("/student/register")) return "Mahasiswa";
@@ -49,8 +68,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
   const filteredMajors = useMemo(() => {
     if (!selectedFaculty) return [];
-    return major.filter((m) => m.facultyId === Number(selectedFaculty));
-  }, [selectedFaculty, major]);
+    return majors.filter((m) => m.facultyId === Number(selectedFaculty));
+  }, [selectedFaculty, majors]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,11 +90,25 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       return;
     }
 
-    const success = await register(email, password, name, "mahasiswa");
-    if (success) {
+    try {
+      const payload = {
+        name,
+        email,
+        password,
+        facultyId: Number(selectedFaculty),
+        majorId: Number(selectedMajor),
+      };
+
+      if (location.pathname.includes("/student/register")) {
+        await createUserPandingStudent(payload);
+      } else if (location.pathname.includes("/lecturer/register")) {
+        await createUserPandingLecturer(payload);
+      }
+
       setSuccess(true);
-    } else {
-      setError("Gagal mendaftar. Silakan coba lagi.");
+    } catch (err) {
+      console.error("Gagal mendaftar:", err);
+      setError("Terjadi kesalahan saat mendaftar. Silakan coba lagi.");
     }
   };
 
@@ -154,7 +187,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   <SelectValue placeholder="Pilih Fakultas" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                  {faculty.map((f) => (
+                  {faculties.map((f) => (
                     <SelectItem key={f.id} value={f.id.toString()}>
                       {f.name}
                     </SelectItem>

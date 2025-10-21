@@ -1,10 +1,10 @@
-import { BASE_URL } from "@/lib/apiAuth";
-import type { User } from "@/types/User";
+import { AUTH_BASE_URL } from "@/lib/api";
+import type { Users } from "@/types/User";
 
-export async function approvePendingUser(pending_id: number): Promise<User> {
+export async function approvePendingUser(pending_id: number): Promise<Users> {
   const token = localStorage.getItem("token");
 
-  const res = await fetch(`${BASE_URL}/admin/approve/user`, {
+  const res = await fetch(`${AUTH_BASE_URL}/admin/approve/user`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -19,13 +19,13 @@ export async function approvePendingUser(pending_id: number): Promise<User> {
   if (!res.ok) throw new Error("Gagal menyetujui user pending");
 
   const data = await res.json().catch(() => ({}));
-  return data.user as User;
+  return data.user as Users;
 }
 
-export async function getAllUser(): Promise<User[]> {
+export async function getAllUser(): Promise<Users[]> {
   const token = localStorage.getItem("token");
 
-  const res = await fetch(`${BASE_URL}/admin/users`, {
+  const res = await fetch(`${AUTH_BASE_URL}/admin/users`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
@@ -41,10 +41,10 @@ export async function getAllUser(): Promise<User[]> {
   return data.active_users || [];
 }
 
-export async function updateUserSemester(userId: number, newSemester: number): Promise<User> {
+export async function updateUserSemester(userId: number, newSemester: number): Promise<Users> {
   const token = localStorage.getItem("token");
 
-  const res = await fetch(`${BASE_URL}/admin/user/${userId}/semester`, {
+  const res = await fetch(`${AUTH_BASE_URL}/admin/user/${userId}/semester`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -57,5 +57,5 @@ export async function updateUserSemester(userId: number, newSemester: number): P
   if (!res.ok) throw new Error("Gagal mengupdate semester mahasiswa");
 
   const data = await res.json();
-  return data.user as User;
+  return data.user as Users;
 }

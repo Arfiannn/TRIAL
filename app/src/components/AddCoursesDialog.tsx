@@ -21,6 +21,15 @@ import { mockUser, mockMajor, mockFaculty, mockUserApproved } from "@/utils/mock
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import TimeKeeper from "react-timekeeper";
+import type { Users } from "@/types/User";
+import type { Faculty } from "@/types/Faculty";
+import type { Major } from "@/types/Major";
+import { getAllUser } from "./services/User";
+import { getFaculty } from "./services/Faculty";
+import { getMajor } from "./services/Major";
+import { useAuth } from "./auth/AuthContext";
+import { createCourse, updateCourse } from "./services/Course";
+import { formatTime } from "./FormatTime";
 
 interface AddCourseDialogProps {
   open: boolean;
@@ -36,6 +45,7 @@ export default function AddCourseDialog({
   editData,
 }: AddCourseDialogProps) {
   const isEdit = !!editData;
+  const {user} = useAuth ();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -48,54 +58,75 @@ export default function AddCourseDialog({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [isTimePickerOpen, setIsTimePickerOpen] = useState<"start" | "end" | false>(false);
+  const [lecturer, setLecturer] = useState<Users[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([])
+  const [majors, setMajors] = useState<Major[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const sksOption = ["2", "3", "4", "5", "6"];
   const semesterOption = Array.from({ length: 7 }, (_, i) => (i + 1).toString());
   const dayOption = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
-  // ✅ Ambil fakultas & dosen
-  const faculties = ["Semua", ...mockFaculty.map((f) => f.name)];
-  const approvedUserIds = mockUserApproved.map((a) => a.userId);
+  const availaleFaculties = ["Semua", ...faculties.map((f) => f.name_faculty)];
 
-  const lecturers = useMemo(() => {
-    return mockUser.filter((u) => {
-      if (u.role !== "dosen") return false;
-      if (!approvedUserIds.includes(u.id)) return false;
-      if (facultyFilter === "Semua") return true;
+  useEffect(() => {
+      async function fetchData() {
+        setLoading(true);
+        try{
+          const [users, faculties, majors] = await Promise.all([
+            getAllUser(),
+            getFaculty(),
+            getMajor()
+          ])
+          const dosen = users.filter((u) => u.roleId === 2);
+          setLecturer(dosen);
+          setFaculties(faculties);
+          setMajors(majors)
+        } catch (err) {
+          console.error(err);
+          toast.error("Gagal memuat data dosen dan fakultas");
+        } finally {
+          setLoading(false);
+        }
+      }
+      fetchData();
+    }, []);
 
-      const major = mockMajor.find((m) => m.id === u.majorId);
-      if (!major) return false;
-      const faculty = mockFaculty.find((f) => f.id === major.facultyId);
-      return faculty?.name === facultyFilter;
-    });
-  }, [facultyFilter, approvedUserIds]);
+  const filteredLecturer = lecturer.filter((lecturer) => {
+    if (facultyFilter === "Semua") return true;
 
-  const majors = useMemo(() => mockMajor, []);
+    // cari jurusan dosen
+    const major = majors.find((m) => m.id_major === lecturer.majorId);
+    if (!major) return false;
 
-  // === Preload data untuk edit ===
+    // cari fakultas jurusan tersebut
+    const faculty = faculties.find((f) => f.id_faculty === major.facultyId);
+    return faculty?.name_faculty === facultyFilter;
+  });
+
   useEffect(() => {
     if (editData) {
-      setName(editData.name || "");
+      setName(editData.name_course || "");
       setDescription(editData.description || "");
-      setSelectedCredits(editData.credits?.toString() || "");
+      setSelectedCredits(editData.sks?.toString() || "");
       setSelectedSemester(editData.semester?.toString() || "");
       setSelectedMajor(editData.majorId?.toString() || "");
       setSelectedDay(editData.day || "");
-      setStartTime(editData.startTime || "");
-      setEndTime(editData.endTime || "");
+      setStartTime(formatTime(editData.start_time) || "");
+      setEndTime(formatTime(editData.end_time )|| "");
 
-      const lecturer = mockUser.find((u) => u.id === editData.lecturerId);
-      const major = mockMajor.find((m) => m.id === lecturer?.majorId);
-      const faculty = mockFaculty.find((f) => f.id === major?.facultyId);
+      const Lecturer = lecturer.find((u) => u.id_user === editData.lecturerId);
+      const Major = majors.find((m) => m.id_major === Lecturer?.majorId);
+      const Faculty = faculties.find((f) => f.id_faculty === Major?.facultyId);
 
-      setSelectedLecturer(lecturer ? lecturer.id.toString() : "");
-      setFacultyFilter(faculty?.name || "Semua");
+      setSelectedLecturer(Lecturer ? Lecturer.id_user.toString() : "");
+      setFacultyFilter(Faculty?.name_faculty || "Semua");
     } else {
       resetForm();
     }
   }, [editData]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (
       !name ||
       !description ||
@@ -111,7 +142,6 @@ export default function AddCourseDialog({
       return;
     }
 
-    // 🔒 Validasi jam
     const [startH, startM] = startTime.split(":").map(Number);
     const [endH, endM] = endTime.split(":").map(Number);
     const startMinutes = startH * 60 + startM;
@@ -121,32 +151,37 @@ export default function AddCourseDialog({
       return;
     }
 
-    const lecturerData = mockUser.find((u) => u.id.toString() === selectedLecturer);
-    const majorData = mockMajor.find((m) => m.id.toString() === selectedMajor);
-
-    const newCourse = {
-      id: isEdit ? editData.id : Date.now(),
-      name,
-      description,
-      lecturerId: lecturerData?.id,
-      credits: parseInt(selectedCredits),
-      semester: parseInt(selectedSemester),
+    const payload = {
+      lecturerId: parseInt(selectedLecturer),
       majorId: parseInt(selectedMajor),
+      semester: selectedSemester,
+      namecourse: name,
+      description,
+      sks: parseInt(selectedCredits),
       day: selectedDay,
-      startTime,
-      endTime,
-      lecturerName: lecturerData?.name,
-      major: majorData?.name,
+      start_time: startTime,
+      end_time: endTime,
     };
 
-    onSave(newCourse);
-    toast.success(
-      isEdit
-        ? `Mata kuliah "${name}" berhasil diperbarui!`
-        : `Mata kuliah "${name}" berhasil ditambahkan!`
-    );
-    resetForm();
-    onClose();
+    try {
+      if (isEdit && editData?.id_course) {
+        // ✳️ MODE EDIT
+        const updated = await updateCourse(editData.id_course, payload);
+        toast.success(`Mata kuliah "${updated.name_course}" berhasil diperbarui!`);
+        onSave(updated); // update di parent
+      } else {
+        // ➕ MODE CREATE
+        const created = await createCourse(payload);
+        toast.success(`Mata kuliah "${created.name_course}" berhasil ditambahkan!`);
+        onSave(created); // tambahkan ke parent list
+      }
+
+      resetForm();
+      onClose();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Terjadi kesalahan saat menyimpan data");
+    }
   };
 
   const resetForm = () => {
@@ -192,7 +227,7 @@ export default function AddCourseDialog({
                     <SelectValue placeholder="Pilih fakultas" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                    {faculties.map((faculty) => (
+                    {availaleFaculties.map((faculty) => (
                       <SelectItem key={faculty} value={faculty}>
                         {faculty}
                       </SelectItem>
@@ -203,13 +238,13 @@ export default function AddCourseDialog({
 
               <Separator className="bg-gray-700 my-1" />
 
-              {lecturers.length > 0 ? (
-                lecturers.map((lecturer) => {
+              {!loading && filteredLecturer.length > 0 ? (
+                filteredLecturer.map((lecturer) => {
                   const major = mockMajor.find((m) => m.id === lecturer.majorId);
                   return (
                     <SelectItem
-                      key={lecturer.id}
-                      value={lecturer.id.toString()}
+                      key={lecturer.id_user}
+                      value={lecturer.id_user.toString()}
                       className="text-white py-2 text-sm flex justify-between"
                     >
                       {lecturer.name}
@@ -249,8 +284,8 @@ export default function AddCourseDialog({
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700 text-white">
                   {majors.map((m) => (
-                    <SelectItem key={m.id} value={m.id.toString()}>
-                      {m.name}
+                    <SelectItem key={m.id_major} value={m.id_major.toString()}>
+                      {m.name_major}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -2,29 +2,51 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mockUser, mockCourses, mockUserApproved, } from '@/utils/mockData';
-import { Users, UserCheck, BookOpen, Settings, } from 'lucide-react';
+import { UserCheck, BookOpen, Settings, Users2, } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
 import ApprovalsTab from './ApprovalsSection';
 import StudentsTab from './StudentSection';
 import LecturersTab from './LecturerSection';
 import CoursesTab from './CoursesSection';
+import { useEffect, useState } from 'react';
+import type { UserPending } from '@/types/UserPanding';
+import { getAllUser } from '../services/User';
+import { getAllUserPending } from '../services/UserPending';
+import { toast } from 'sonner';
+import type { Users } from '@/types/User';
+import type { Course } from '@/types/Course';
+import { getAllCourses } from '../services/Course';
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
-  
-  const approvedUsers = mockUserApproved.map((u) => u.userId);
+  const [usersPending, setUsersPending] = useState<UserPending []>([]); 
+  const [users, setUsers] = useState<Users []>([]);
+  const [courses, setCourses] =  useState<Course []>([]);
+  const [loading, setLoading] = useState(true);
 
-  const pendingApprovals = mockUser.filter(
-    (u) => !approvedUsers.includes(u.id)
-  );
-
-  const approvedStudents = mockUser.filter(
-    (u) => approvedUsers.includes(u.id) && u.role === "mahasiswa"
-  );
+  useEffect (() => {
+    async function fetchData() {
+      try{
+        const [courses, users, usersPending] = await Promise.all([
+          getAllCourses(),
+          getAllUser(),
+          getAllUserPending(),
+        ]);
+        setCourses(courses);
+        setUsers(users);
+        setUsersPending(usersPending);
+      } catch (err: any) {
+        toast.error(err.message || "Gagal memuat data");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   // 🔹 Ambil daftar semester unik dari mahasiswa aktif
   const activeSemestersSet = new Set(
-    approvedStudents
+    users
       .filter((s) => s.semester !== undefined && s.semester !== null)
       .map((s) => s.semester)
   );
@@ -34,9 +56,9 @@ export const AdminDashboard: React.FC = () => {
 
 
   const stats = {
-    totalUsers: mockUserApproved.length,
-    pendingApprovals: pendingApprovals.length,
-    totalCourses: mockCourses.length,
+    totalUsers: users.length,
+    pendingApprovals: usersPending.length,
+    totalCourses: courses.length,
     activeSemesters: activeSemesters.length
   };
 
@@ -57,7 +79,7 @@ export const AdminDashboard: React.FC = () => {
         <Card className="bg-[#1e2745ff] border border-blue-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-blue-200">Total Pengguna</CardTitle>
-            <Users className="h-4 w-4 text-blue-400" />
+            <Users2 className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent className='flex flex-row gap-2 items-end'>
             <div className="text-2xl font-bold text-white">{stats.totalUsers}</div>

@@ -1,8 +1,8 @@
-import { BASE_URL } from "@/lib/apiAuth";
+import { AUTH_BASE_URL } from "@/lib/api";
 import type { UserPending } from "@/types/UserPanding";
 
 export async function createUserPandingStudent(data: Omit<UserPending, "id_pending" | "roleId">): Promise<UserPending> {
-  const res = await fetch(`${BASE_URL}/auth/register/mahasiswa`, {
+  const res = await fetch(`${AUTH_BASE_URL}/auth/register/mahasiswa`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -17,7 +17,7 @@ export async function createUserPandingStudent(data: Omit<UserPending, "id_pendi
 }
 
 export async function createUserPandingLecturer(data: Omit<UserPending, "id_pending" | "roleId">): Promise<UserPending> {
-  const res = await fetch(`${BASE_URL}/auth/register/dosen`, {
+  const res = await fetch(`${AUTH_BASE_URL}/auth/register/dosen`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),

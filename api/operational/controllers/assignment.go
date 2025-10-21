@@ -12,7 +12,26 @@ import (
 )
 
 func CreateAssignment(c *gin.Context) {
-	courseID, _ := strconv.Atoi(c.PostForm("courseId"))
+	userID := c.GetUint("user_id")
+	roleID := c.GetUint("role_id")
+
+	if roleID != 2 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Hanya dosen yang bisa membuat tugas"})
+		return
+	}
+
+	courseID, err := strconv.Atoi(c.PostForm("courseId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "courseId tidak valid"})
+		return
+	}
+
+	var course models.Course
+	if err := config.DB.First(&course, "id_course = ? AND lecturerId = ?", courseID, userID).Error; err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Kamu tidak memiliki akses ke course ini"})
+		return
+	}
+
 	title := c.PostForm("title")
 	description := c.PostForm("description")
 	deadlineStr := c.PostForm("deadline")
@@ -30,7 +49,7 @@ func CreateAssignment(c *gin.Context) {
 		}
 	}
 
-	deadline, err := time.Parse("2006-01-02T15:04:05", deadlineStr)
+	deadline, err := time.Parse("2006-01-02 15:04:05", deadlineStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Format deadline salah"})
 		return
@@ -58,9 +77,8 @@ func CreateAssignment(c *gin.Context) {
 
 func GetAllAssignments(c *gin.Context) {
 	var assignments []models.Assignment
-
 	if err := config.DB.Find(&assignments).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch assignments"})
 		return
 	}
 
@@ -70,21 +88,24 @@ func GetAllAssignments(c *gin.Context) {
 func GetAssignmentByID(c *gin.Context) {
 	id := c.Param("id")
 	var assignment models.Assignment
-
 	if err := config.DB.First(&assignment, "id_assignment = ?", id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Tugas tidak ditemukan"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Assignment not found"})
 		return
 	}
-
 	c.JSON(http.StatusOK, assignment)
 }
 
 func UpdateAssignment(c *gin.Context) {
+	// only lecturer
+	if c.GetUint("role_id") != 2 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only lecturer can update assignments"})
+		return
+	}
+
 	id := c.Param("id")
 	var assignment models.Assignment
-
 	if err := config.DB.First(&assignment, "id_assignment = ?", id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Tugas tidak ditemukan"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Assignment not found"})
 		return
 	}
 
@@ -106,17 +127,17 @@ func UpdateAssignment(c *gin.Context) {
 
 	file, err := c.FormFile("file_url")
 	if err == nil {
-		openedFile, err := file.Open()
+		f, err := file.Open()
 		if err == nil {
-			defer openedFile.Close()
-			fileBytes, _ := io.ReadAll(openedFile)
+			defer f.Close()
+			fileBytes, _ := io.ReadAll(f)
 			assignment.FileURL = fileBytes
 			assignment.FileType = file.Header.Get("Content-Type")
 		}
 	}
 
 	if err := config.DB.Save(&assignment).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal update tugas"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update assignment"})
 		return
 	}
 
@@ -124,9 +145,15 @@ func UpdateAssignment(c *gin.Context) {
 }
 
 func DeleteAssignment(c *gin.Context) {
+	// only lecturer
+	if c.GetUint("role_id") != 2 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only lecturer can delete assignments"})
+		return
+	}
+
 	id := c.Param("id")
 	if err := config.DB.Delete(&models.Assignment{}, "id_assignment = ?", id).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal hapus tugas"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete assignment"})
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -135,9 +162,8 @@ func DeleteAssignment(c *gin.Context) {
 func GetAssignmentFile(c *gin.Context) {
 	id := c.Param("id")
 	var assignment models.Assignment
-
 	if err := config.DB.First(&assignment, "id_assignment = ?", id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Tugas tidak ditemukan"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Assignment not found"})
 		return
 	}
 

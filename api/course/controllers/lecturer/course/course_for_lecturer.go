@@ -28,5 +28,6 @@ func GetCoursesByLecturerID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": courses})
+	c.JSON(http.StatusOK, gin.H{
+		"data": courses})
 }

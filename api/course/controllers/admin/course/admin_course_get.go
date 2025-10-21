@@ -39,5 +39,6 @@ func GetCourseByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": course})
+	c.JSON(http.StatusOK, gin.H{
+		"data": course})
 }

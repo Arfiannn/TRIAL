@@ -4,14 +4,15 @@ import (
 	"course-service/controllers/admin/course"
 	"course-service/middleware"
 
-
 	"github.com/gin-gonic/gin"
 )
 
 func AdminRoutes(r *gin.RouterGroup) {
 
+	admin := r.Group("")
+	admin.Use(middleware.JWTAuthMiddleware())
+
 	courses := r.Group("/courses")
-	courses.Use(middleware.JWTAuthMiddleware())
 	{
 		courses.POST("", course.CreateCourse)
 		courses.GET("", course.GetAllCourses)

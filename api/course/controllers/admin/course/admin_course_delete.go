@@ -4,7 +4,6 @@ import (
 	"course-service/config"
 	"course-service/models"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,11 +15,7 @@ func DeleteCourse(c *gin.Context) {
 		return
 	}
 
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ID mata kuliah tidak valid"})
-		return
-	}
+	id := c.Param("id")
 
 	var course models.Course
 	if err := config.DB.First(&course, "id_course = ?", id).Error; err != nil {

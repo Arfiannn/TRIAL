@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mockUser, mockMajor, mockFaculty, mockUserApproved } from "@/utils/mockData";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import TimeKeeper from "react-timekeeper";
@@ -27,7 +26,6 @@ import type { Major } from "@/types/Major";
 import { getAllUser } from "./services/User";
 import { getFaculty } from "./services/Faculty";
 import { getMajor } from "./services/Major";
-import { useAuth } from "./auth/AuthContext";
 import { createCourse, updateCourse } from "./services/Course";
 import { formatTime } from "./FormatTime";
 
@@ -45,7 +43,6 @@ export default function AddCourseDialog({
   editData,
 }: AddCourseDialogProps) {
   const isEdit = !!editData;
-  const {user} = useAuth ();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -240,7 +237,7 @@ export default function AddCourseDialog({
 
               {!loading && filteredLecturer.length > 0 ? (
                 filteredLecturer.map((lecturer) => {
-                  const major = mockMajor.find((m) => m.id === lecturer.majorId);
+                  const major = majors.find((m) => m.id_major === lecturer.majorId);
                   return (
                     <SelectItem
                       key={lecturer.id_user}
@@ -249,7 +246,7 @@ export default function AddCourseDialog({
                     >
                       {lecturer.name}
                       <span className="text-gray-400 text-x ml-2">
-                        | {major?.name}
+                        | {major?.name_major}
                       </span>
                     </SelectItem>
                   );

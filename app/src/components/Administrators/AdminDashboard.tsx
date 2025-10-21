@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockUser, mockCourses, mockUserApproved, } from '@/utils/mockData';
 import { UserCheck, BookOpen, Settings, Users2, } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
 import ApprovalsTab from './ApprovalsSection';

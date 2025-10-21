@@ -9,10 +9,16 @@ import (
 )
 
 func GetCoursesByStudent(c *gin.Context) {
-	studentID := c.Query("studentId")
+	studentID := c.GetUint("user_id")
+	roleID := c.GetUint("role_id")
 
-	if studentID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "studentId tidak boleh kosong"})
+	if roleID != 3 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Hanya student yang boleh mengakses data course ini"})
+		return
+	}
+
+	if studentID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User tidak terautentikasi"})
 		return
 	}
 
@@ -36,7 +42,7 @@ func GetCoursesByStudent(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Berhasil mengambil data course sesuai semester, fakultas, dan jurusan mahasiswa",
+		"message": "Berhasil mengambil course sesuai semester, fakultas, dan jurusan mahasiswa",
 		"data":    courses,
 	})
 }

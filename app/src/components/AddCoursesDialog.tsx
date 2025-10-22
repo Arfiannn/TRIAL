@@ -27,7 +27,6 @@ import { getAllUser } from "./services/User";
 import { getFaculty } from "./services/Faculty";
 import { getMajor } from "./services/Major";
 import { createCourse, updateCourse } from "./services/Course";
-import { formatTime } from "./FormatTime";
 
 interface AddCourseDialogProps {
   open: boolean;
@@ -54,7 +53,7 @@ export default function AddCourseDialog({
   const [selectedDay, setSelectedDay] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [isTimePickerOpen, setIsTimePickerOpen] = useState<"start" | "end" | false>(false);
+  const [isTimePickerOpen, setIsTimePickerOpen] = useState<"start_time" | "end_time" | false>(false);
   const [lecturer, setLecturer] = useState<Users[]>([]);
   const [faculties, setFaculties] = useState<Faculty[]>([])
   const [majors, setMajors] = useState<Major[]>([]);
@@ -109,8 +108,8 @@ export default function AddCourseDialog({
       setSelectedSemester(editData.semester?.toString() || "");
       setSelectedMajor(editData.majorId?.toString() || "");
       setSelectedDay(editData.day || "");
-      setStartTime(formatTime(editData.start_time) || "");
-      setEndTime(formatTime(editData.end_time )|| "");
+      setStartTime(editData.start_time || "");
+      setEndTime(editData.end_time|| "");
 
       const Lecturer = lecturer.find((u) => u.id_user === editData.lecturerId);
       const Major = majors.find((m) => m.id_major === Lecturer?.majorId);
@@ -151,13 +150,13 @@ export default function AddCourseDialog({
     const payload = {
       lecturerId: parseInt(selectedLecturer),
       majorId: parseInt(selectedMajor),
-      semester: selectedSemester,
-      namecourse: name,
+      semester: parseInt(selectedSemester),
+      name_course: name,
       description,
       sks: parseInt(selectedCredits),
       day: selectedDay,
-      start_time: startTime,
-      end_time: endTime,
+      start_time: startTime, // ✅ format ISO lengkap
+      end_time: endTime
     };
 
     try {
@@ -351,7 +350,7 @@ export default function AddCourseDialog({
                   <Button
                     variant="outline"
                     className="w-full bg-gray-800 border-gray-700 text-white justify-start"
-                    onClick={() => setIsTimePickerOpen("start")}
+                    onClick={() => setIsTimePickerOpen("start_time")}
                   >
                     {startTime || "Pilih Jam Mulai"}
                   </Button>
@@ -364,7 +363,7 @@ export default function AddCourseDialog({
                   <Button
                     variant="outline"
                     className="w-full bg-gray-800 border-gray-700 text-white justify-start"
-                    onClick={() => setIsTimePickerOpen("end")}
+                    onClick={() => setIsTimePickerOpen("end_time")}
                   >
                     {endTime || "Pilih Jam Selesai"}
                   </Button>
@@ -376,14 +375,14 @@ export default function AddCourseDialog({
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
                   <div className="bg-gray-900 border border-gray-700 rounded-xl p-4 shadow-lg">
                     <h3 className="text-white mb-3 text-center text-lg font-semibold">
-                      {isTimePickerOpen === "start"
+                      {isTimePickerOpen === "start_time"
                         ? "Pilih Jam Mulai"
                         : "Pilih Jam Selesai"}
                     </h3>
 
                     <TimeKeeper
                       time={
-                        isTimePickerOpen === "start"
+                        isTimePickerOpen === "start_time"
                           ? startTime || "08:00"
                           : endTime || "10:00"
                       }
@@ -391,7 +390,7 @@ export default function AddCourseDialog({
                       switchToMinuteOnHourSelect
                       onChange={(data) => {
                         const selected = data.formatted24;
-                        if (isTimePickerOpen === "start") {
+                        if (isTimePickerOpen === "start_time") {
                           setStartTime(selected);
                         } else {
                           setEndTime(selected);

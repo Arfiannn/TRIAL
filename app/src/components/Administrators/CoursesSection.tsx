@@ -11,7 +11,6 @@ import { deleteCourse, getAllCourses } from "../services/Course";
 import { getMajor } from "../services/Major";
 import type { Users } from "@/types/User";
 import { getAllUser } from "../services/User";
-import { formatTime } from "../FormatTime";
 
 export default function CoursesTab() {
   const [openAddDialog, setOpenAddDialog] = useState(false);
@@ -38,7 +37,7 @@ export default function CoursesTab() {
         setLecturers(dosen);
       } catch (err) {
         console.error(err);
-        toast.error("Gagal memuat data mata kuliah dan program studi");
+        toast.error("Gagal memuat data mata kuliah, program studi dan dosen");
       } finally {
         setLoading(false);
       }
@@ -49,7 +48,7 @@ export default function CoursesTab() {
   const handleAddCourse = (course: any) => {
     // Jika sedang edit → replace data
     if (editData) {
-      setCourses((prev) => prev.map((c) => (c.id_course === course.id ? course : c)));
+      setCourses((prev) => prev.map((c) => (c.id_course === course.id_course ? course : c)));
       setEditData(null);
     } else {
       setCourses((prev) => [...prev, course]);
@@ -139,7 +138,7 @@ export default function CoursesTab() {
                     <div className="flex gap-2 items-center">
                       <Clock size={15} />
                       <p className="text-[13px]">
-                        {formatTime(course.start_time)} - {formatTime(course.end_time)}
+                        {course.start_time} - {course.end_time}
                       </p>
                     </div>
                   </CardDescription>
@@ -172,11 +171,11 @@ export default function CoursesTab() {
                   </Button>
 
                   <ValidationDialog 
-                    title={`Apakah Anda Yakin MengHapus Mata Kuliah: ${selectedCourse?.name ?? ""}?`}
+                    title={`Apakah Anda Yakin MengHapus Mata Kuliah: ${selectedCourse?.name_course ?? ""}?`}
                     open={openDeleteDialog}
                     onClose={() => setOpenDeleteDialog(false)}
                     onVal={() => {
-                      handleDeleteCourse(selectedCourse.id, selectedCourse.name)
+                      handleDeleteCourse(selectedCourse.id_course, selectedCourse.name_course)
                       setOpenDeleteDialog(false);
                     }}
                     valName="Hapus"

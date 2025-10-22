@@ -14,11 +14,11 @@ export interface Course {
 export interface CourseInput {
   lecturerId?: number;
   majorId: number;
-  semester: string;
-  namecourse: string;
+  semester: number;
+  name_course: string;
   description: string;
   sks: number;
   day: string;
-  start_time?: string; // format "HH:mm"
-  end_time?: string;   // format "HH:mm"
+  start_time: string; // format "HH:mm"
+  end_time: string;   // format "HH:mm"
 }

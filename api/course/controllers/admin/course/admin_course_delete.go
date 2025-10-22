@@ -24,9 +24,13 @@ func DeleteCourse(c *gin.Context) {
 	}
 
 	if err := config.DB.Delete(&course).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus mata kuliah"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal soft delete mata kuliah"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Mata kuliah berhasil dihapus oleh admin"})
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "Mata kuliah berhasil dihapus (soft delete)",
+		"id_course":  course.IDCourse,
+		"deleted_at": course.DeletedAt.Time,
+	})
 }

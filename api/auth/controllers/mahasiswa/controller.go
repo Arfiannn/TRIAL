@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"auth-service/config"
 	"auth-service/models"
 	"github.com/gin-gonic/gin"
 	"github.com/go-sql-driver/mysql"
@@ -24,8 +25,10 @@ func RegisterMahasiswa(c *gin.Context) {
 		return
 	}
 
-	// 🔍 Cek apakah email sudah ada di user ATAU user_pending
-	if exists, _ := models.IsEmailExists(input.Email); exists {
+	var userCount, pendingCount int64
+	config.DB.Model(&models.User{}).Where("email = ?", input.Email).Count(&userCount)
+	config.DB.Model(&models.UserPending{}).Where("email = ?", input.Email).Count(&pendingCount)
+	if userCount > 0 || pendingCount > 0 {
 		c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
 		return
 	}
@@ -36,18 +39,24 @@ func RegisterMahasiswa(c *gin.Context) {
 		return
 	}
 
-	if err := models.RegisterUserPending(input.Name, input.Email, string(hashed), 3, input.FacultyID, input.MajorID); err != nil {
-		// 🔍 Deteksi error duplikat email (MySQL error 1062)
+	pending := models.UserPending{
+		Name:      input.Name,
+		Email:     input.Email,
+		Password:  string(hashed),
+		RoleID:    3,
+		FacultyID: input.FacultyID,
+		MajorID:   input.MajorID,
+	}
+
+	if err := config.DB.Create(&pending).Error; err != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
 			c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
 			return
 		}
-		
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Registration failed"})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Registration successful. Awaiting admin approval."})
-} 
-
+}

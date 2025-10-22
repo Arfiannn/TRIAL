@@ -2,10 +2,10 @@ package admin
 
 import (
 	"net/http"
+	"strconv"
 
 	"auth-service/config"
 	"auth-service/models"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -23,7 +23,10 @@ func RegisterAdmin(c *gin.Context) {
 		return
 	}
 
-	if exists, _ := models.IsEmailExists(input.Email); exists {
+	var userCount, pendingCount int64
+	config.DB.Model(&models.User{}).Where("email = ?", input.Email).Count(&userCount)
+	config.DB.Model(&models.UserPending{}).Where("email = ?", input.Email).Count(&pendingCount)
+	if userCount > 0 || pendingCount > 0 {
 		c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
 		return
 	}
@@ -34,15 +37,14 @@ func RegisterAdmin(c *gin.Context) {
 		return
 	}
 
-
 	adminUser := models.User{
 		Name:      input.Name,
 		Email:     input.Email,
 		Password:  string(hashedPassword),
-		Semester:  0,        
-		RoleID:    1,       
-		FacultyID: 1,        
-		MajorID:   1,        
+		Semester:  0,
+		RoleID:    1,
+		FacultyID: 1, 
+		MajorID:   1, // 
 	}
 
 	if err := config.DB.Create(&adminUser).Error; err != nil {
@@ -52,7 +54,6 @@ func RegisterAdmin(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Admin registered successfully."})
 }
-
 
 func ApproveUser(c *gin.Context) {
 	var input struct {
@@ -64,17 +65,46 @@ func ApproveUser(c *gin.Context) {
 		return
 	}
 
-	if err := models.ApproveUser(input.PendingID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Approval failed"})
+	var pending models.UserPending
+	if err := config.DB.Where("id_pending = ?", input.PendingID).Take(&pending).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Pending user not found"})
 		return
 	}
+
+	semester := 1
+	if pending.RoleID == 2 {
+		semester = 0
+	}
+
+	user := models.User{
+		Name:      pending.Name,
+		Email:     pending.Email,
+		Password:  pending.Password,
+		Semester:  semester,
+		RoleID:    pending.RoleID,
+		FacultyID: pending.FacultyID,
+		MajorID:   pending.MajorID,
+	}
+
+	tx := config.DB.Begin()
+	if err := tx.Create(&user).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		return
+	}
+	if err := tx.Delete(&pending).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete pending user"})
+		return
+	}
+	tx.Commit()
 
 	c.JSON(http.StatusOK, gin.H{"message": "User approved successfully"})
 }
 
 func GetPendingUsers(c *gin.Context) {
-	pendings, err := models.GetAllPendingUsers()
-	if err != nil {
+	var pendings []models.UserPending
+	if err := config.DB.Find(&pendings).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch pending users"})
 		return
 	}
@@ -82,8 +112,8 @@ func GetPendingUsers(c *gin.Context) {
 }
 
 func GetActiveUsers(c *gin.Context) {
-	users, err := models.GetAllActiveUsers()
-	if err != nil {
+	var users []models.User
+	if err := config.DB.Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch active users"})
 		return
 	}
@@ -98,7 +128,7 @@ func DeletePendingUser(c *gin.Context) {
 		return
 	}
 
-	if err := models.DeletePendingUser(uint(id)); err != nil {
+	if err := config.DB.Delete(&models.UserPending{}, uint(id)).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete pending user"})
 		return
 	}
@@ -108,7 +138,7 @@ func DeletePendingUser(c *gin.Context) {
 
 func DeleteUser(c *gin.Context) {
 	userID := c.Param("id")
-	id, err := strconv.ParseUint(userID, 10, 32) // ✅ SIMPAN HASILNYA KE `id`
+	id, err := strconv.ParseUint(userID, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return

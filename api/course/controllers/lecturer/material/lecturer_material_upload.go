@@ -3,11 +3,8 @@ package material
 import (
 	"course-service/config"
 	"course-service/models"
-	"encoding/json"
-	"fmt"
+	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -38,63 +35,35 @@ func UploadMaterial(c *gin.Context) {
 	title := c.PostForm("title")
 	description := c.PostForm("description")
 
-	form, err := c.MultipartForm()
-	var savedPaths []string
-	var lastFileType string
+	var fileBytes []byte
+	var fileType string
 
-	if err == nil && form.File != nil {
-		files := form.File["file_url"]
-		if len(files) > 0 {
-			if _, err := os.Stat("uploads"); os.IsNotExist(err) {
-				os.Mkdir("uploads", 0755)
-			}
-
-			for _, file := range files {
-				fileType := file.Header.Get("Content-Type")
-				fileName := fmt.Sprintf("%d_%s", time.Now().Unix(), filepath.Base(file.Filename))
-				filePath := filepath.Join("uploads", fileName)
-
-				if err := c.SaveUploadedFile(file, filePath); err != nil {
-					fmt.Println("❌ Gagal simpan file:", err)
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan file"})
-					return
-				}
-
-				savedPaths = append(savedPaths, filePath)
-				lastFileType = fileType
-			}
+	file, err := c.FormFile("file_url")
+	if err == nil {
+		f, err := file.Open()
+		if err == nil {
+			defer f.Close()
+			fileBytes, _ = io.ReadAll(f)
+			fileType = file.Header.Get("Content-Type")
 		}
 	}
-
-	fileURLJSON, _ := json.Marshal(savedPaths)
 
 	material := models.Material{
 		CourseID:    uint(courseID),
 		Title:       title,
 		Description: description,
-		FileURL:     string(fileURLJSON),
-		FileType:    lastFileType,
+		FileURL:     fileBytes,
+		FileType:    fileType,
 		CreatedAt:   time.Now(),
 	}
 
 	if err := config.DB.Create(&material).Error; err != nil {
-		fmt.Println("❌ DB Insert Error:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat material"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan material"})
 		return
 	}
 
-	var filePaths []string
-	_ = json.Unmarshal([]byte(material.FileURL), &filePaths)
-
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Material berhasil dibuat",
-		"data": gin.H{
-			"id_material": material.IDMaterial,
-			"title":       material.Title,
-			"description": material.Description,
-			"file_paths":  filePaths,
-			"file_type":   material.FileType,
-			"created_at":  material.CreatedAt,
-		},
+		"data":    material,
 	})
 }

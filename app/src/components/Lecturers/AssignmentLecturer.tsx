@@ -20,12 +20,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FileText, Upload, Plus, File, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { mockAssignments, mockCourses } from "@/utils/mockData";
 import { useNavigate } from "react-router-dom";
 import TimeKeeper from "react-timekeeper"
 import ValidationDialog from "../ValidationDialog";
 import type { Assignment } from "@/types/Assignment";
-import { getAllAssignments } from "../services/Assignment";
+import { createAssignment, deleteAssignment, getAllAssignments, updateAssignment } from "../services/Assignment";
+import type { Major } from "@/types/Major";
+import { getMajor } from "../services/Major";
 
 interface Props {
   courseId: number;
@@ -33,11 +34,12 @@ interface Props {
 
 export default function AssignmentTab({ courseId }: Props) {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [majors, setMajors] = useState<Major[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Assignment | null>(null);
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false)
   const [tempDate, setTempDate] = useState<string>("")
-  const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false); 
   const [loading, setLoading] = useState(false);
 
@@ -45,14 +47,13 @@ export default function AssignmentTab({ courseId }: Props) {
     async function fetchAssignments() {
       setLoading(true);
       try {
-        const data = await getAllAssignments();
-        setAssignments(
-          data.map((a) => ({
-            ...a,
-            deadline: new Date(a.deadline),
-            createdAt: new Date(a.createdAt),
-          }))
-        );
+        const [assignments, majors] = await Promise.all([
+          getAllAssignments(),
+          getMajor(),
+        ])
+        const filtered = assignments.filter((a) => a.courseId === courseId);
+        setAssignments(filtered);
+        setMajors(majors);
       } catch (err: any) {
         console.error(err);
         toast.error(err.message || "Gagal memuat data tugas");
@@ -64,19 +65,7 @@ export default function AssignmentTab({ courseId }: Props) {
     fetchAssignments();
   }, []);
 
-  const course = mockCourses.find((c) => c.id === courseId);
-
-  // useEffect(() => {
-  //   const filtered = mockAssignments
-  //     .filter((a) => a.courseId === courseId)
-  //     .map((a) => ({
-  //       ...a,
-  //       dueDate: new Date(a.dueDate), // pastikan balik ke objek Date
-  //       createdAt: new Date(a.createdAt),
-  //     }));
-  //   setAssignments(filtered);
-  // }, [courseId]);
-
+  const course = majors.find((c) => c.id_major === courseId);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -86,7 +75,7 @@ export default function AssignmentTab({ courseId }: Props) {
   });
 
   const [file, setFile] = useState<File | null>(null);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [file_url, setFileUrl] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const navigate = useNavigate();
@@ -99,8 +88,7 @@ export default function AssignmentTab({ courseId }: Props) {
     const selected = event.target.files?.[0];
     if (selected) {
       setFile(selected);
-      const url = URL.createObjectURL(selected);
-      setFileUrl(url);
+      setFileUrl(URL.createObjectURL(selected));
       toast.success(`File "${selected.name}" berhasil dipilih`);
     }
   };
@@ -118,7 +106,7 @@ export default function AssignmentTab({ courseId }: Props) {
         deadlineTime: date.toTimeString().slice(0, 5), // ambil HH:mm
       });
       setFile(null);
-      setFileUrl(assignment.fileUrl || null);
+      setFileUrl(assignment.file_url || null);
     } else {
       setEditing(null);
       setFormData({
@@ -134,51 +122,64 @@ export default function AssignmentTab({ courseId }: Props) {
   };
 
   /** ===================== SAVE ===================== */
-  const handleSaveAssignment = () => {
+  const handleSaveAssignment = async () => {
     if (!formData.title || !formData.description || !formData.deadlineDate) {
       toast.error("Lengkapi semua field tugas!");
       return;
     }
 
-    // 🔹 Gabungkan tanggal dan jam jadi satu objek Date
-    const [year, month, day] = formData.deadlineDate.split("-").map(Number);
-    const [hour, minute] = (formData.deadlineTime || "23:59").split(":").map(Number);
-    const dueDateTime = new Date(year, month - 1, day, hour, minute);
+    // Format ke backend
+    const formattedDeadline = `${formData.deadlineDate} ${formData.deadlineTime || "23:59"}:00`;
 
-    if (editing) {
-      const updated = {
-        ...editing,
-        ...formData,
-        dueDate: dueDateTime,
-        fileUrl: file ? fileUrl : editing.fileUrl,
-      };
-      setAssignments((prev) =>
-        prev.map((a) => (a.id_assigment === editing.id_assigment ? updated : a))
-      );
-      toast.success(`Tugas "${formData.title}" berhasil diperbarui!`);
-    } else {
-      const newAssignment: Assignment = {
-        id_assigment: Date.now(),
-        courseId,
-        title: formData.title,
-        description: formData.description,
-        deadline: dueDateTime,
-        fileUrl,
-        createdAt: new Date(),
-      };
-      setAssignments((prev) => [...prev, newAssignment]);
-      toast.success(`Tugas "${formData.title}" berhasil dibuat!`);
+    try {
+      if (editing) {
+        const fileUrlToUse = file ? file_url : editing.file_url;
+        const fileTypeToUse = file ? file.type : editing.file_type;
+
+        const updated = await updateAssignment(editing.id_assignment, {
+          title: formData.title,
+          description: formData.description,
+          deadline: formattedDeadline,
+          file: file || null,
+          file_url: fileUrlToUse || "",
+          file_type: fileTypeToUse || "",
+        });
+
+        setAssignments((prev) =>
+          prev.map((a) =>
+            a.id_assignment === editing.id_assignment ? updated : a
+          )
+        );
+        toast.success(`Tugas "${formData.title}" berhasil diperbarui!`);
+      } else {
+        const created = await createAssignment({
+          courseId,
+          title: formData.title,
+          description: formData.description,
+          deadline: formattedDeadline,
+          file: file || null,
+        });
+
+        setAssignments((prev) => [...prev, created]);
+        toast.success(`Tugas "${formData.title}" berhasil dibuat!`);
+      }
+
+      setIsDialogOpen(false);
+      setEditing(null);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Terjadi kesalahan saat menyimpan tugas");
     }
-
-    setIsDialogOpen(false);
-    setEditing(null);
-    setFile(null);
-    setFileUrl(null);
   };
 
-  const handleDeleteAssignment = (id: number, title: string) => {
-    setAssignments((prev) => prev.filter((a) => a.id_assigment !== id));
-    toast.success(`Tugas: ${title} berhasil dihapus!`);
+  const handleDeleteAssignment = async (id: number, title: string) => {
+    try{
+      await deleteAssignment(id);
+      setAssignments((prev) => prev.filter((a) => a.id_assignment !== id));
+      toast.success(`Tugas: ${title} berhasil dihapus!`);
+    } catch (err:any) {
+      toast.error(err.message || "Gagal menghapus tugas");
+    }
   };
 
   return (
@@ -202,9 +203,9 @@ export default function AssignmentTab({ courseId }: Props) {
         <div className="grid gap-4">
           {assignments.map((a) => (
             <Card
-              key={a.id_assigment}
+              key={a.id_assignment}
               className="bg-gray-800/50 border-gray-700"
-              onClick={() => handleToListSubmission(a.id_assigment)}
+              onClick={() => handleToListSubmission(a.id_assignment)}
             >
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -218,11 +219,13 @@ export default function AssignmentTab({ courseId }: Props) {
                       const date = new Date(a.deadline);
 
                       const formatted = date.toLocaleString("id-ID", {
+                        timeZone: "Asia/Makassar",
                         day: "2-digit",
                         month: "short",
                         year: "numeric",
                         hour: "2-digit",
                         minute: "2-digit",
+                        hour12: false,
                       });
 
                       return date < new Date() ? `${formatted} (Selesai)` : formatted;
@@ -230,20 +233,20 @@ export default function AssignmentTab({ courseId }: Props) {
                   </Badge>
                 </div>
                 <CardDescription className="text-gray-400">
-                  {course?.name}
+                  {course?.name_major}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-300 mb-2">{a.description}</p>
 
-                {a.fileUrl && (
+                {a.file_url && (
                   <Button
                     size="sm"
                     variant="outline"
                     className="bg-gray-700 border border-gray-600 text-white"
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.open(a.fileUrl || "#", "_blank");
+                      window.open(a.file_url || "#", "_blank");
                     }}
                   >
                     <File className="h-4 w-4" /> {a.title}
@@ -284,7 +287,7 @@ export default function AssignmentTab({ courseId }: Props) {
         onClose={() => setOpenDeleteDialog(false)}
         onVal={() => {
           if(selectedAssignment) {
-            handleDeleteAssignment(selectedAssignment.id, selectedAssignment.name);
+            handleDeleteAssignment(selectedAssignment.id_assignment, selectedAssignment.title);
           }
           setOpenDeleteDialog(false);
         }}
@@ -302,7 +305,7 @@ export default function AssignmentTab({ courseId }: Props) {
             <DialogDescription className="text-gray-400">
               {editing
                 ? `Ubah detail tugas ${editing.title}`
-                : `Buat tugas untuk mata kuliah ${course?.name}`}
+                : `Buat tugas untuk mata kuliah ${course?.name_major}`}
             </DialogDescription>
           </DialogHeader>
 
@@ -388,7 +391,7 @@ export default function AssignmentTab({ courseId }: Props) {
                         const selectedTime = data.formatted24;
                         setFormData((prev) => ({
                           ...prev,
-                          dueTime: selectedTime, // simpan langsung jam (string "HH:mm")
+                          deadlineTime: selectedTime, // simpan langsung jam (string "HH:mm")
                         }));
                       }}
                       doneButton={() => (
@@ -406,12 +409,12 @@ export default function AssignmentTab({ courseId }: Props) {
             </div>
 
             {/* Menampilkan file lama atau baru */}
-            {(file || fileUrl) && (
+            {(file || file_url) && (
               <div>
                 <Button
                   variant="ghost"
                   className="bg-gray-800 border border-gray-700 inline-flex text-white"
-                  onClick={() => window.open(fileUrl!, "_blank")}
+                  onClick={() => window.open(file_url!, "_blank")}
                 >
                   <File size={16} className="mr-1 text-blue-400" />
                   {file ? file.name : formData.title}

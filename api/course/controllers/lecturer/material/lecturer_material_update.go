@@ -34,19 +34,21 @@ func UpdateMaterial(c *gin.Context) {
 		return
 	}
 
-	var input struct {
-		Title       string `json:"title"`
-		Description string `json:"description"`
-		FileURL     string `json:"file_url"`
-	}
+	var input map[string]interface{}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	material.Title = input.Title
-	material.Description = input.Description
-	material.FileURL = input.FileURL
+	if title, ok := input["title"].(string); ok {
+		material.Title = title
+	}
+	if desc, ok := input["description"].(string); ok {
+		material.Description = desc
+	}
+	if file, ok := input["file_url"].(string); ok {
+		material.FileURL = file
+	}
 
 	if err := config.DB.Save(&material).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui material"})
@@ -55,5 +57,6 @@ func UpdateMaterial(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Material berhasil diperbarui",
-		"data":    material})
+		"data":    material,
+	})
 }

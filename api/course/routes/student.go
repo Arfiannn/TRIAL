@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"course-service/controllers/admin/course"
-	"course-service/controllers/lecturer/material"
+	"course-service/controllers/student/course"
+	"course-service/controllers/student/material"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,13 +10,11 @@ import (
 func StudentRoutes(r *gin.RouterGroup) {
 	courses := r.Group("/courses")
 	{
-		courses.GET("/:semester", course.GetAllCourses)
-		courses.GET("/detail/:id", course.GetCourseByID)
+		courses.GET("", course.GetCoursesByStudent)
 	}
 
 	materials := r.Group("/materials")
 	{
-		materials.GET("", material.GetAllMaterials)
-		materials.GET("/:id", material.GetMaterialByID)
+		materials.GET("/:courseId", material.GetMaterialsByCourseID)
 	}
 }

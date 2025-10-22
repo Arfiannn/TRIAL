@@ -9,6 +9,12 @@ import (
 )
 
 func UpdateCourse(c *gin.Context) {
+	roleID := c.GetUint("role_id")
+	if roleID != 1 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Hanya admin yang boleh mengubah mata kuliah"})
+		return
+	}
+
 	id := c.Param("id")
 
 	var existing models.Course

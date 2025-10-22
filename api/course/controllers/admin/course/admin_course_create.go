@@ -13,15 +13,24 @@ func CreateCourse(c *gin.Context) {
 	var body map[string]interface{}
 	var course models.Course
 
+	// Jwt Validation
+	userID := c.GetUint("user_id")
+	roleID := c.GetUint("role_id")
+
+	if roleID != 1 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Hanya admin yang boleh membuat mata kuliah"})
+		return
+	}
+
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	course.AdminID = uint(body["adminId"].(float64))
+	course.AdminID = userID
 	course.LecturerID = uint(body["lecturerId"].(float64))
 	course.MajorID = uint(body["majorId"].(float64))
-	course.Semester = body["semester"].(string)
+	course.Semester = int(body["semester"].(float64))
 	course.NameCourse = body["namecourse"].(string)
 	course.Description = body["description"].(string)
 	course.SKS = int(body["sks"].(float64))

@@ -1,41 +1,37 @@
-import { BASE_URL } from "@/lib/apiAuth";
+import { AUTH_BASE_URL } from "@/lib/api";
+import type { UserPending } from "@/types/UserPanding";
 
-export interface UserPending {
-  id_pending: number;
-  facultyId: number;
-  majorId: number;
-  name: string;
-  email: string;
-  password: string;
-  roleId: number;
-}
+export async function getAllUserPending(): Promise<UserPending[]> {
+  const token = localStorage.getItem("token");
 
-export async function createUserPandingStudent(data: Omit<UserPending, "id_pending" | "roleId">): Promise<UserPending> {
-  const res = await fetch(`${BASE_URL}/auth/register/mahasiswa`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+  const res = await fetch(`${AUTH_BASE_URL}/admin/users/pending`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
   });
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Gagal membuat mahasiswa: ${err}`);
+    if (res.status === 401) throw new Error("Unauthorized: Token tidak valid atau sudah kadaluarsa");
+    throw new Error("Gagal menemukan User Pending");
   }
 
-  return res.json();
+  const data = await res.json();
+  return data.pending_users || [];
 }
 
-export async function createUserPandingLecturer(data: Omit<UserPending, "id_pending" | "roleId">): Promise<UserPending> {
-  const res = await fetch(`${BASE_URL}/auth/register/dosen`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+// 🧩 Delete pending user berdasarkan ID
+export async function deletePendingUser(id: number): Promise<void> {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${AUTH_BASE_URL}/admin/pending/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
   });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Gagal membuat dosen: ${err}`);
-  }
-
-  return res.json();
+  if (res.status === 401) throw new Error("Unauthorized: Token tidak valid atau sudah kadaluarsa");
+  if (!res.ok) throw new Error("Gagal menghapus user pending");
 }

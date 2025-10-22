@@ -1,23 +1,55 @@
 import { Button } from "@/components/ui/button";
-import { mockCourses, mockMajor, mockUser, mockUserApproved } from "@/utils/mockData"; // ✅ tambahkan mockMajor
 import { BookOpen, Calendar, Clock, User } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import AddCourseDialog from "@/components/AddCoursesDialog";
 import ValidationDialog from "../ValidationDialog";
+import type { Course } from "@/types/Course";
+import type { Major } from "@/types/Major";
+import { deleteCourse, getAllCourses } from "../services/Course";
+import { getMajor } from "../services/Major";
+import type { Users } from "@/types/User";
+import { getAllUser } from "../services/User";
+import { formatTime } from "../FormatTime";
 
 export default function CoursesTab() {
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [editData, setEditData] = useState<any>(null);
-  const [courses, setCourses] = useState(mockCourses);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [majors, setMajors] = useState<Major[]>([]);
+  const [lecturers, setLecturers] = useState<Users[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try{
+        const [courses, majors, lecturers] = await Promise.all([
+          getAllCourses(),
+          getMajor(),
+          getAllUser(),
+        ])
+        const dosen = lecturers.filter((l) => l.roleId === 2);
+        setCourses(courses);
+        setMajors(majors);
+        setLecturers(dosen);
+      } catch (err) {
+        console.error(err);
+        toast.error("Gagal memuat data mata kuliah dan program studi");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [])
 
   const handleAddCourse = (course: any) => {
     // Jika sedang edit → replace data
     if (editData) {
-      setCourses((prev) => prev.map((c) => (c.id === course.id ? course : c)));
+      setCourses((prev) => prev.map((c) => (c.id_course === course.id ? course : c)));
       setEditData(null);
     } else {
       setCourses((prev) => [...prev, course]);
@@ -29,9 +61,14 @@ export default function CoursesTab() {
     setOpenAddDialog(true);
   };
 
-  const deleteCourse = (id: number, name: string) => {
-    setCourses((prev) => prev.filter((c) => c.id !== id));
-    toast.warning(`Mata kuliah: ${name} berhasil dihapus!`);
+  const handleDeleteCourse = async (id: number, name: string) => {
+    try{
+      await deleteCourse(id);
+      setCourses((prev) => prev.filter((c) => c.id_course !== id));
+      toast.warning(`Mata kuliah: ${name} berhasil dihapus!`);
+    } catch (err:any) {
+      toast.error(err.message || "Gagal menghapus mata kuliah");
+    }
   };
 
   return (
@@ -63,26 +100,20 @@ export default function CoursesTab() {
       {/* === LIST COURSE === */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {courses.map((course) => {
-          // ✅ cari jurusan berdasarkan majorId
-          const major = mockMajor.find((m) => m.id === course.majorId);
+          const major = majors.find((m) => m.id_major === course.majorId);
 
-          const approved = mockUserApproved.find(
-            (a) => a.userId === course.lecturerId
-          );
-          const lecturer = approved
-            ? mockUser.find((u) => u.id === approved.userId)
-            : null;
+          const lecturer = lecturers.find((l) => l.id_user === course.lecturerId)
 
           return (
-            <Card key={course.id} className="bg-gray-800/50 border-gray-700">
+            <Card key={course.id_course} className="bg-gray-800/50 border-gray-700">
               <CardHeader>
                 <div>
                   <div className="flex gap-3 items-end">
                     <CardTitle className="text-white text-xl">
-                      {course.name}
+                      {course.name_course}
                     </CardTitle>
                     <p className="text-gray-400 text-[13px] text-end">
-                      | {course.credits} SKS
+                      | {course.sks} SKS
                     </p>
                   </div>
 
@@ -90,7 +121,7 @@ export default function CoursesTab() {
                     <div className="flex gap-2 items-center py-2">
                       {/* ✅ tampilkan nama jurusan dari mockMajor */}
                       <p className="text-[13px]">
-                        {major?.name || "Jurusan tidak ditemukan"}
+                        {major?.name_major || "Jurusan tidak ditemukan"}
                       </p>
                       <p className="inline-block border border-blue-600 text-blue-300 rounded-xl text-[13px] px-3">
                         Semester {course.semester ?? 1}
@@ -108,7 +139,7 @@ export default function CoursesTab() {
                     <div className="flex gap-2 items-center">
                       <Clock size={15} />
                       <p className="text-[13px]">
-                        {course.startTime} - {course.endTime}
+                        {formatTime(course.start_time)} - {formatTime(course.end_time)}
                       </p>
                     </div>
                   </CardDescription>
@@ -145,7 +176,7 @@ export default function CoursesTab() {
                     open={openDeleteDialog}
                     onClose={() => setOpenDeleteDialog(false)}
                     onVal={() => {
-                      deleteCourse(selectedCourse.id, selectedCourse.name)
+                      handleDeleteCourse(selectedCourse.id, selectedCourse.name)
                       setOpenDeleteDialog(false);
                     }}
                     valName="Hapus"

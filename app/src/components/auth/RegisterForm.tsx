@@ -10,7 +10,6 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, CheckCircle, User, Mail, Lock } from "lucide-react";
 import InputWithIcon from "@/components/InputWithIcon";
-import { mockFaculty, mockMajor } from "@/utils/mockData";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -19,10 +18,9 @@ import {
   SelectValue,
   SelectContent,
 } from "@/components/ui/select";
-import { useAuth } from "./AuthContext";
-import { getFaculty, type Faculty } from "../services/Faculty";
-import { getMajor, type Major } from "../services/Major";
-import { createUserPandingLecturer, createUserPandingStudent } from "../services/UserPending";
+import { getFaculty  } from "../services/Faculty";
+import { getMajor } from "../services/Major";
+import { createUserPandingLecturer, createUserPandingStudent } from "../services/Register";
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
@@ -38,8 +36,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   const [selectedFaculty, setSelectedFaculty] = useState<string>("");
   const [selectedMajor, setSelectedMajor] = useState<string>("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const { register, isLoading } = useAuth();
 
   const [faculties, setFaculties] = useState<any[]>([]);
   const [majors, setMajors] = useState<any[]>([]);
@@ -74,6 +72,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     if (password !== confirmPassword) {
       setError("Password tidak cocok");
@@ -188,8 +187,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700 text-white">
                   {faculties.map((f) => (
-                    <SelectItem key={f.id} value={f.id.toString()}>
-                      {f.name}
+                    <SelectItem key={f.id_faculty} value={f.id_faculty.toString()}>
+                      {f.name_faculty}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -205,8 +204,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-700 text-white">
                     {filteredMajors.map((m) => (
-                      <SelectItem key={m.id} value={m.id.toString()}>
-                        {m.name}
+                      <SelectItem key={m.id_major} value={m.id_major.toString()}>
+                        {m.name_major}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -233,7 +232,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               leftIcon={<Lock size={18} />}
             />
           </div>
-
 
           <Button
             type="submit"

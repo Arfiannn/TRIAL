@@ -1,24 +1,24 @@
 import { AdminDashboard } from "@/components/Administrators/AdminDashboard";
-import { useAuth } from "@/components/auth/AuthContext";
 import { LecturerDashboard } from "@/components/Lecturers/LecturerDashboard";
-import { Navigate } from "react-router-dom";
 import { StudentDashboard } from "@/components/Students/StudentDashboard";
+import { Navigate } from "react-router-dom";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
 
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
-  switch (user.role) {
-    case "administrator":
+  switch (user.roleId) {
+    case 1:
       return <AdminDashboard />;
-    case "dosen":
+    case 2:
       return <LecturerDashboard />;
-    case "mahasiswa":
+    case 3:
       return <StudentDashboard />;
     default:
-      return <div className="text-white">Role tidak dikenali</div>;
+      return <div className="text-white text-center mt-10">Role tidak dikenali</div>;
   }
 }

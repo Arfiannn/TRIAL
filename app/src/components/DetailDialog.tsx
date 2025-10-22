@@ -55,7 +55,7 @@ export default function DetailDialog({
                 <span className="font-semibold text-gray-300">Fakultas:</span> {data.faculty}
               </p>
             )}
-            {data.semester != null && (
+            {data.semester != null || data.semester === 0 && (
               <p>
                 <span className="font-semibold text-gray-300">Semester:</span> {data.semester}
               </p>

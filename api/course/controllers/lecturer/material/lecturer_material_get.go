@@ -34,7 +34,7 @@ func GetAllMaterials(c *gin.Context) {
 	}
 
 	var materials []models.Material
-	if err := config.DB.Where("course_id IN ?", courseIDs).Find(&materials).Error; err != nil {
+	if err := config.DB.Where("courseId IN ?", courseIDs).Find(&materials).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil material"})
 		return
 	}

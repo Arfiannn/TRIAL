@@ -49,7 +49,8 @@ func CreateAssignment(c *gin.Context) {
 		}
 	}
 
-	deadline, err := time.Parse("2006-01-02 15:04:05", deadlineStr)
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+	deadline, err := time.ParseInLocation("2006-01-02 15:04:05", deadlineStr, loc)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Format deadline salah"})
 		return
@@ -120,7 +121,8 @@ func UpdateAssignment(c *gin.Context) {
 		assignment.Description = description
 	}
 	if deadlineStr != "" {
-		if d, err := time.Parse("2006-01-02T15:04:05", deadlineStr); err == nil {
+		loc, _ := time.LoadLocation("Asia/Jakarta")
+		if d, err := time.ParseInLocation("2006-01-02 15:04:05", deadlineStr, loc); err == nil {
 			assignment.Deadline = d
 		}
 	}

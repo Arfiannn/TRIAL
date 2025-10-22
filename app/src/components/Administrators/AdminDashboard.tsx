@@ -31,9 +31,11 @@ export const AdminDashboard: React.FC = () => {
           getAllUser(),
           getAllUserPending(),
         ]);
+
+        const usersPen = usersPending.filter((u) => u.roleId === 3 || u.roleId ===2);
         setCourses(courses);
         setUsers(users);
-        setUsersPending(usersPending);
+        setUsersPending(usersPen);
       } catch (err: any) {
         toast.error(err.message || "Gagal memuat data");
       } finally {

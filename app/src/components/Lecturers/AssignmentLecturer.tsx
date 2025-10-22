@@ -22,9 +22,10 @@ import { FileText, Upload, Plus, File, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { mockAssignments, mockCourses } from "@/utils/mockData";
 import { useNavigate } from "react-router-dom";
-import type { Assignment } from "@/types";
 import TimeKeeper from "react-timekeeper"
 import ValidationDialog from "../ValidationDialog";
+import type { Assignment } from "@/types/Assignment";
+import { getAllAssignments } from "../services/Assignment";
 
 interface Props {
   courseId: number;
@@ -38,26 +39,50 @@ export default function AssignmentTab({ courseId }: Props) {
   const [tempDate, setTempDate] = useState<string>("")
   const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false); 
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchAssignments() {
+      setLoading(true);
+      try {
+        const data = await getAllAssignments();
+        setAssignments(
+          data.map((a) => ({
+            ...a,
+            deadline: new Date(a.deadline),
+            createdAt: new Date(a.createdAt),
+          }))
+        );
+      } catch (err: any) {
+        console.error(err);
+        toast.error(err.message || "Gagal memuat data tugas");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAssignments();
+  }, []);
 
   const course = mockCourses.find((c) => c.id === courseId);
 
-  useEffect(() => {
-    const filtered = mockAssignments
-      .filter((a) => a.courseId === courseId)
-      .map((a) => ({
-        ...a,
-        dueDate: new Date(a.dueDate), // pastikan balik ke objek Date
-        createdAt: new Date(a.createdAt),
-      }));
-    setAssignments(filtered);
-  }, [courseId]);
+  // useEffect(() => {
+  //   const filtered = mockAssignments
+  //     .filter((a) => a.courseId === courseId)
+  //     .map((a) => ({
+  //       ...a,
+  //       dueDate: new Date(a.dueDate), // pastikan balik ke objek Date
+  //       createdAt: new Date(a.createdAt),
+  //     }));
+  //   setAssignments(filtered);
+  // }, [courseId]);
 
 
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    dueDate: "",
-    dueTime: "",
+    deadlineDate: "",
+    deadlineTime: "",
   });
 
   const [file, setFile] = useState<File | null>(null);
@@ -85,12 +110,12 @@ export default function AssignmentTab({ courseId }: Props) {
   const handleOpenDialog = (assignment?: Assignment) => {
     if (assignment) {
       setEditing(assignment);
-      const date = new Date(assignment.dueDate);
+      const date = new Date(assignment.deadline);
       setFormData({
         title: assignment.title,
         description: assignment.description,
-        dueDate: date.toISOString().split("T")[0],
-        dueTime: date.toTimeString().slice(0, 5), // ambil HH:mm
+        deadlineDate: date.toISOString().split("T")[0],
+        deadlineTime: date.toTimeString().slice(0, 5), // ambil HH:mm
       });
       setFile(null);
       setFileUrl(assignment.fileUrl || null);
@@ -99,8 +124,8 @@ export default function AssignmentTab({ courseId }: Props) {
       setFormData({
         title: "",
         description: "",
-        dueDate: "",
-        dueTime: "",
+        deadlineDate: "",
+        deadlineTime: "",
       });
       setFile(null);
       setFileUrl(null);
@@ -110,14 +135,14 @@ export default function AssignmentTab({ courseId }: Props) {
 
   /** ===================== SAVE ===================== */
   const handleSaveAssignment = () => {
-    if (!formData.title || !formData.description || !formData.dueDate) {
+    if (!formData.title || !formData.description || !formData.deadlineDate) {
       toast.error("Lengkapi semua field tugas!");
       return;
     }
 
     // 🔹 Gabungkan tanggal dan jam jadi satu objek Date
-    const [year, month, day] = formData.dueDate.split("-").map(Number);
-    const [hour, minute] = (formData.dueTime || "23:59").split(":").map(Number);
+    const [year, month, day] = formData.deadlineDate.split("-").map(Number);
+    const [hour, minute] = (formData.deadlineTime || "23:59").split(":").map(Number);
     const dueDateTime = new Date(year, month - 1, day, hour, minute);
 
     if (editing) {
@@ -128,16 +153,16 @@ export default function AssignmentTab({ courseId }: Props) {
         fileUrl: file ? fileUrl : editing.fileUrl,
       };
       setAssignments((prev) =>
-        prev.map((a) => (a.id === editing.id ? updated : a))
+        prev.map((a) => (a.id_assigment === editing.id_assigment ? updated : a))
       );
       toast.success(`Tugas "${formData.title}" berhasil diperbarui!`);
     } else {
       const newAssignment: Assignment = {
-        id: Date.now(),
+        id_assigment: Date.now(),
         courseId,
         title: formData.title,
         description: formData.description,
-        dueDate: dueDateTime,
+        deadline: dueDateTime,
         fileUrl,
         createdAt: new Date(),
       };
@@ -152,7 +177,7 @@ export default function AssignmentTab({ courseId }: Props) {
   };
 
   const handleDeleteAssignment = (id: number, title: string) => {
-    setAssignments((prev) => prev.filter((a) => a.id !== id));
+    setAssignments((prev) => prev.filter((a) => a.id_assigment !== id));
     toast.success(`Tugas: ${title} berhasil dihapus!`);
   };
 
@@ -177,9 +202,9 @@ export default function AssignmentTab({ courseId }: Props) {
         <div className="grid gap-4">
           {assignments.map((a) => (
             <Card
-              key={a.id}
+              key={a.id_assigment}
               className="bg-gray-800/50 border-gray-700"
-              onClick={() => handleToListSubmission(a.id)}
+              onClick={() => handleToListSubmission(a.id_assigment)}
             >
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -190,7 +215,7 @@ export default function AssignmentTab({ courseId }: Props) {
                   <Badge className="bg-gray-600 border-gray-300 text-white">
                     Deadline:{" "}
                     {(() => {
-                      const date = new Date(a.dueDate);
+                      const date = new Date(a.deadline);
 
                       const formatted = date.toLocaleString("id-ID", {
                         day: "2-digit",
@@ -308,23 +333,23 @@ export default function AssignmentTab({ courseId }: Props) {
                   <Label className="text-gray-200">Tanggal Deadline</Label>
                   <Input
                     type="date"
-                    value={formData.dueDate}
+                    value={formData.deadlineDate}
                     onChange={(e) => {
                       const selectedDate = e.target.value;
                       setTempDate(selectedDate);
-                      setFormData({ ...formData, dueDate: selectedDate });
+                      setFormData({ ...formData, deadlineDate: selectedDate });
                       setIsTimePickerOpen(true); // buka popup jam
                     }}
                     className="bg-gray-800 border-gray-700 text-white cursor-pointer"
                   />
                 </div>
 
-                {formData.dueTime && (
+                {formData.deadlineTime && (
                   <Input
                     type="text"
                     readOnly
                     placeholder="--:--"
-                    value={formData.dueTime}
+                    value={formData.deadlineTime}
                     className="w-[90px] bg-gray-800 border-gray-700 text-white text-center cursor-default"
                   />
                 )}
@@ -356,7 +381,7 @@ export default function AssignmentTab({ courseId }: Props) {
                       Pilih Jam Deadline
                     </h3>
                     <TimeKeeper
-                      time={formData.dueTime || "12:00"}
+                      time={formData.deadlineTime || "12:00"}
                       hour24Mode
                       switchToMinuteOnHourSelect
                       onChange={(data) => {

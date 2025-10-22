@@ -30,7 +30,7 @@ func CreateCourse(c *gin.Context) {
 	course.AdminID = userID
 	course.LecturerID = uint(body["lecturerId"].(float64))
 	course.MajorID = uint(body["majorId"].(float64))
-	course.Semester = body["semester"].(string)
+	course.Semester = int(body["semester"].(float64))
 	course.NameCourse = body["namecourse"].(string)
 	course.Description = body["description"].(string)
 	course.SKS = int(body["sks"].(float64))

@@ -1,10 +1,9 @@
 package utils
 
 import (
+	"course-service/models"
 	"errors"
 	"os"
-
-	"course-service/models"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -15,13 +14,14 @@ func ValidateToken(tokenString string) (*models.Validate, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &models.Validate{}, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecret, nil
 	})
-	if err != nil {
-		return nil, errors.New("invalid token")
+	if err != nil || !token.Valid {
+		return nil, errors.New("invalid or expired token")
 	}
 
-	if payload, ok := token.Claims.(*models.Validate); ok && token.Valid {
-		return payload, nil
+	claims, ok := token.Claims.(*models.Validate)
+	if !ok {
+		return nil, errors.New("invalid token claims")
 	}
 
-	return nil, errors.New("invalid token claims")
+	return claims, nil
 }

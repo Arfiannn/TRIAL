@@ -24,6 +24,7 @@ func LecturerRoutes(r *gin.RouterGroup) {
 
 	courses := lecturer.Group("/courses")
 	{
-		courses.GET("", course.GetCoursesByLecturerID)
+		courses.GET("", course.GetAllCoursesByLecturerID)
+		courses.GET("/:id", course.GetCourseByID)
 	}
 }

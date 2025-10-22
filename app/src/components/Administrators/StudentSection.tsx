@@ -19,7 +19,7 @@ import {
 import { toast } from "sonner";
 import DetailDialog from "@/components/DetailDialog";
 import ValidationDialog from "../ValidationDialog";
-import type { User } from "@/types/User";
+import type { Users } from "@/types/User";
 import type { Major } from "@/types/Major";
 import { getAllUser, updateUserSemester } from "../services/User";
 import { getMajor } from "../services/Major";
@@ -28,10 +28,10 @@ export default function StudentsTab() {
 
   const [majorFilter, setMajorFilter] = useState<string>("Semua");
   const [semesterFilter, setSemesterFilter] = useState<string>("Semua");
-  const [students, setStudents] = useState<User[]>([]);
+  const [students, setStudents] = useState<Users[]>([]);
   const [majors, setMajors] = useState<Major[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
-  const [selectedStuSem, setSelectedStuSem] = useState<User | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Users | null>(null);
+  const [selectedStuSem, setSelectedStuSem] = useState<Users | null>(null);
   const [openSemesterDialog, setOpenSemesterDialog] = useState(false);
   const [loading, setLoading] = useState(false);
 

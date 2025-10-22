@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { UserCheck } from "lucide-react";
 import DetailDialog from "@/components/DetailDialog";
-import type { User } from "@/types/User";
+import type { Users } from "@/types/User";
 import type { Faculty } from "@/types/Faculty";
 import { getAllUser } from "../services/User";
 import { getFaculty } from "../services/Faculty";
@@ -27,11 +27,11 @@ import { getMajor } from "../services/Major";
 export default function LecturersTab() {
 
 
-  const [lecturer, setLecturer] = useState<User[]>([]);
+  const [lecturer, setLecturer] = useState<Users[]>([]);
   const [faculties, setFaculties] = useState<Faculty[]>([])
   const [majors, setMajors] = useState<Major[]>([]);
   const [facultyFilter, setFacultyFilter] = useState<string>("Semua");
-  const [selectedLecturer, setSelectedLecturer] = useState<User | null>(null);
+  const [selectedLecturer, setSelectedLecturer] = useState<Users | null>(null);
   const [loading, setLoading] = useState(false);
 
   // ✅ Ambil daftar fakultas dari mockFaculty

@@ -1,13 +1,13 @@
-import { BASE_URL } from "@/lib/apiAuth";
-import type { User } from "@/types/User";
+import { AUTH_BASE_URL } from "@/lib/api";
+import type { Users } from "@/types/User";
 
 export interface LoginResponse {
   token: string;
-  user: User;
+  user: Users;
 }
 
 export async function loginUser(email: string, password: string): Promise<LoginResponse> {
-  const res = await fetch(`${BASE_URL}/auth/login`, {
+  const res = await fetch(`${AUTH_BASE_URL}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

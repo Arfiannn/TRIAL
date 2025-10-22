@@ -1,4 +1,4 @@
-export interface User {
+export interface Users {
   id_user: number;
   roleId: number;
   facultyId?: number

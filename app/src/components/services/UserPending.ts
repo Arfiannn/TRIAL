@@ -1,10 +1,10 @@
-import { BASE_URL } from "@/lib/apiAuth";
+import { AUTH_BASE_URL } from "@/lib/api";
 import type { UserPending } from "@/types/UserPanding";
 
 export async function getAllUserPending(): Promise<UserPending[]> {
   const token = localStorage.getItem("token");
 
-  const res = await fetch(`${BASE_URL}/admin/users/pending`, {
+  const res = await fetch(`${AUTH_BASE_URL}/admin/users/pending`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
@@ -24,7 +24,7 @@ export async function getAllUserPending(): Promise<UserPending[]> {
 export async function deletePendingUser(id: number): Promise<void> {
   const token = localStorage.getItem("token");
 
-  const res = await fetch(`${BASE_URL}/admin/pending/${id}`, {
+  const res = await fetch(`${AUTH_BASE_URL}/admin/pending/${id}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",

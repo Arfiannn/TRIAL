@@ -12,16 +12,20 @@ import (
 )
 
 func CreateSubmission(c *gin.Context) {
+	userID := c.GetUint("user_id")
+	roleID := c.GetUint("role_id")
+
+	if roleID != 3 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Hanya mahasiswa yang bisa mengumpulkan tugas"})
+		return
+	}
+
 	assignmentID, err := strconv.Atoi(c.PostForm("assignmentId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "assignmentId tidak valid"})
 		return
 	}
-	studentID, err := strconv.Atoi(c.PostForm("studentId"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "studentId tidak valid"})
-		return
-	}
+
 	description := c.PostForm("description")
 	now := time.Now()
 
@@ -36,7 +40,7 @@ func CreateSubmission(c *gin.Context) {
 		status = "Terlambat"
 	}
 
-	file, err := c.FormFile("file")
+	file, err := c.FormFile("file_url")
 	var fileBytes []byte
 	var fileType string
 	if err == nil {
@@ -50,7 +54,7 @@ func CreateSubmission(c *gin.Context) {
 
 	sub := models.Submission{
 		AssignmentID: uint(assignmentID),
-		StudentID:    uint(studentID),
+		StudentID:    userID,
 		Description:  description,
 		FileURL:      fileBytes,
 		FileType:     fileType,
@@ -63,9 +67,7 @@ func CreateSubmission(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Tugas berhasil dikumpulkan",
-	})
+	c.JSON(http.StatusCreated, gin.H{"message": "Tugas berhasil dikumpulkan"})
 }
 
 func GetAllSubmission(c *gin.Context) {

@@ -1,17 +1,10 @@
-import type { User } from "@/types";
-import { mockUser, mockUserApproved } from "@/utils/mockData";
+import type { Users } from "@/types/User";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (
-    email: string,
-    password: string,
-    name: string,
-    role: "mahasiswa" | "dosen"
-  ) => Promise<boolean>;
+  user: Users | null;
+  setUser: React.Dispatch<React.SetStateAction<Users | null>>; // 🔹 supaya bisa diubah dari luar
   logout: () => void;
   isLoading: boolean;
 }
@@ -29,87 +22,34 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<Users | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
+  // 🔹 Load user dari localStorage saat pertama kali
   useEffect(() => {
-    const savedUser = localStorage.getItem("lms_user");
+    const savedUser = localStorage.getItem("user");
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsed = JSON.parse(savedUser);
+      console.log("User yang dimuat dari localStorage:", parsed);
+      setUser(parsed);
     }
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-
-    // 1️⃣ Cari user berdasarkan email dan password
-    const foundUser = mockUser.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
-
-    if (!foundUser) {
-      setIsLoading(false);
-      return false; // email atau password salah
-    }
-
-    // 2️⃣ Cek apakah user sudah disetujui oleh admin
-    const isApproved = mockUserApproved.some(
-      (approved) => approved.userId === foundUser.id
-    );
-
-    if (!isApproved) {
-      alert("Akun Anda belum disetujui oleh admin.");
-      setIsLoading(false);
-      return false;
-    }
-
-    // ✅ Simulasi login sukses
-    setUser(foundUser);
-    localStorage.setItem("lms_user", JSON.stringify(foundUser));
-    setIsLoading(false);
-    return true;
-  };
-
-  const register = async (
-    email: string,
-    password: string,
-    name: string,
-    role: "mahasiswa" | "dosen"
-  ): Promise<boolean> => {
-    setIsLoading(true);
-
-    const pendingUser = {
-      id: Date.now(),
-      email,
-      name,
-      role,
-      status: "pending",
-      createdAt: new Date(),
-    };
-
-    console.log("Pendaftaran baru (menunggu persetujuan):", pendingUser);
-    alert("Pendaftaran berhasil! Menunggu persetujuan admin.");
-    setIsLoading(false);
-    return true;
-  };
-
+  // 🔹 Logout function
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("lms_user");
+    localStorage.removeItem("user");
     navigate("/");
   };
 
   const value = {
     user,
-    login,
-    register,
+    setUser, // 🔹 supaya bisa diakses dari luar (misalnya setelah login API)
     logout,
     isLoading,
   };
 
-  return (
-    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

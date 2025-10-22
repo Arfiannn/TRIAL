@@ -43,8 +43,9 @@ export const LecturerDashboard: React.FC = () => {
   }, [])
 
  const teachingCourses = useMemo(() => {
+    if (!user) return [];
     return courses.filter((course) => course.lecturerId === user.id_user);
-  }, [user]);
+  }, [user, courses]); // ✅ tambahkan courses
 
   // 🔹 Ambil semester unik dari daftar course dosen ini
   const availableSemesters = useMemo(() => {

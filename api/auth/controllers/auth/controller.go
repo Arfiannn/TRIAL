@@ -3,9 +3,9 @@ package auth
 import (
 	"net/http"
 
+	"auth-service/config"
 	"auth-service/models"
 	"auth-service/utils"
-
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -21,8 +21,8 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	user, err := models.GetUserByEmail(input.Email)
-	if err != nil {
+	var user models.User
+	if err := config.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
@@ -42,6 +42,7 @@ func Login(c *gin.Context) {
 		"token": token,
 		"user": gin.H{
 			"id":        user.ID,
+			"roleId":   user.RoleID,
 		},
 	})
 }

@@ -4,26 +4,57 @@ import (
 	"course-service/config"
 	"course-service/models"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 func GetMaterialsByCourseID(c *gin.Context) {
-	courseID := c.Param("courseId")
+
+	studentID := c.GetUint("user_id")
+	roleID := c.GetUint("role_id")
+
+	if roleID != 3 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Hanya student yang boleh mengakses material"})
+		return
+	}
+
+	courseIDParam := c.Param("courseId")
+	courseID, err := strconv.Atoi(courseIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Course ID tidak valid"})
+		return
+	}
+
+	var student models.User
+	if err := config.DB.First(&student, "id_user = ?", studentID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Mahasiswa tidak ditemukan"})
+		return
+	}
+
+	var course models.Course
+	if err := config.DB.
+		Where("id_course = ? AND majorId = ? AND semester = ?", courseID, student.MajorID, student.Semester).
+		First(&course).Error; err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Kamu tidak punya akses ke course ini"})
+		return
+	}
 
 	var materials []models.Material
-	if err := config.DB.Where("courseId = ?", courseID).Find(&materials).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Terjadi kesalahan saat mengambil data materi"})
+	if err := config.DB.
+		Where("courseId = ?", courseID).
+		Find(&materials).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data material"})
 		return
 	}
 
 	if len(materials) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"message": "Tidak ada materi untuk course ini"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "Belum ada material untuk course ini"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Berhasil mengambil data materi",
+		"message": "Berhasil mengambil material untuk course ini",
 		"data":    materials,
 	})
 }

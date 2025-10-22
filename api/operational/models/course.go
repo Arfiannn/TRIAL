@@ -1,6 +1,7 @@
 package models
 
 import "time"
+import "gorm.io/gorm"
 
 type Course struct {
 	IDCourse    uint      `gorm:"primaryKey;column:id_course" json:"id_course"`
@@ -14,6 +15,7 @@ type Course struct {
 	Day         string    `gorm:"column:day" json:"day"`
 	StartTime   time.Time `gorm:"column:start_time" json:"start_time"`
 	EndTime     time.Time `gorm:"column:end_time" json:"end_time"`
+	DeletedAt   gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at"`
 }
 
 func (Course) TableName() string {

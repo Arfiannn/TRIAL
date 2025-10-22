@@ -1,6 +1,7 @@
 package models
 
 import "time"
+import "gorm.io/gorm"
 
 type Assignment struct {
 	ID          uint      `gorm:"primaryKey;column:id_assignment" json:"id_assignment"`
@@ -11,4 +12,5 @@ type Assignment struct {
 	FileURL     []byte    `gorm:"column:file_url" json:"file_url"`
 	FileType    string    `gorm:"column:file_type" json:"file_type"`
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"created_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at"`
 }

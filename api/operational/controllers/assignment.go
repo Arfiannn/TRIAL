@@ -97,7 +97,7 @@ func GetAssignmentByID(c *gin.Context) {
 }
 
 func UpdateAssignment(c *gin.Context) {
-	// only lecturer
+
 	if c.GetUint("role_id") != 2 {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Only lecturer can update assignments"})
 		return
@@ -147,18 +147,24 @@ func UpdateAssignment(c *gin.Context) {
 }
 
 func DeleteAssignment(c *gin.Context) {
-	// only lecturer
 	if c.GetUint("role_id") != 2 {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Only lecturer can delete assignments"})
 		return
 	}
 
 	id := c.Param("id")
-	if err := config.DB.Delete(&models.Assignment{}, "id_assignment = ?", id).Error; err != nil {
+	var assignment models.Assignment
+	if err := config.DB.First(&assignment, "id_assignment = ?", id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Assignment not found"})
+		return
+	}
+
+	if err := config.DB.Delete(&assignment).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete assignment"})
 		return
 	}
-	c.Status(http.StatusNoContent)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Assignment deleted (soft)"})
 }
 
 func GetAssignmentFile(c *gin.Context) {

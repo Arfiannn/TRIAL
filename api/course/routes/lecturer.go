@@ -9,10 +9,11 @@ import (
 )
 
 func LecturerRoutes(r *gin.RouterGroup) {
-	lecturer := r.Group("")
-	lecturer.Use(middleware.JWTAuthMiddleware())
 
-	materials := r.Group("/materials")
+	lecturer := r.Group("")
+	lecturer.Use(middleware.JWTAuthMiddleware(), middleware.RoleOnly(2))
+
+	materials := lecturer.Group("/materials")
 	{
 		materials.POST("", material.UploadMaterial)
 		materials.GET("", material.GetAllMaterials)
@@ -21,8 +22,8 @@ func LecturerRoutes(r *gin.RouterGroup) {
 		materials.DELETE("/:id", material.DeleteMaterial)
 	}
 
-	courses := r.Group("/courses")
+	courses := lecturer.Group("/courses")
 	{
-		courses.GET("/:id", course.GetCoursesByLecturerID)
+		courses.GET("", course.GetCoursesByLecturerID)
 	}
 }

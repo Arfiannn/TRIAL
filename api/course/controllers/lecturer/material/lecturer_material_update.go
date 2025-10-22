@@ -3,6 +3,7 @@ package material
 import (
 	"course-service/config"
 	"course-service/models"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -50,24 +51,35 @@ func UpdateMaterial(c *gin.Context) {
 		material.Description = description
 	}
 
-	file, err := c.FormFile("file_url")
-	if err == nil {
-		if _, err := os.Stat("uploads"); os.IsNotExist(err) {
-			os.Mkdir("uploads", 0755)
+	form, err := c.MultipartForm()
+	if err == nil && form.File != nil {
+		files := form.File["file_url"]
+		if len(files) > 0 {
+			var savedPaths []string
+			var lastFileType string
+
+			if _, err := os.Stat("uploads"); os.IsNotExist(err) {
+				os.Mkdir("uploads", 0755)
+			}
+
+			for _, file := range files {
+				fileType := file.Header.Get("Content-Type")
+				fileName := fmt.Sprintf("%d_%s", time.Now().Unix(), filepath.Base(file.Filename))
+				filePath := filepath.Join("uploads", fileName)
+
+				if err := c.SaveUploadedFile(file, filePath); err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan file"})
+					return
+				}
+
+				savedPaths = append(savedPaths, filePath)
+				lastFileType = fileType
+			}
+
+			pathsJSON, _ := json.Marshal(savedPaths)
+			material.FileURL = string(pathsJSON)
+			material.FileType = lastFileType
 		}
-
-		fileType := file.Header.Get("Content-Type")
-		fileName := fmt.Sprintf("%d_%s", time.Now().Unix(), filepath.Base(file.Filename))
-		filePath := filepath.Join("uploads", fileName)
-
-		if err := c.SaveUploadedFile(file, filePath); err != nil {
-			fmt.Println("❌ Gagal simpan file:", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan file"})
-			return
-		}
-
-		material.FileURL = []byte(filePath)
-		material.FileType = fileType
 	}
 
 	if err := config.DB.Save(&material).Error; err != nil {
@@ -75,13 +87,16 @@ func UpdateMaterial(c *gin.Context) {
 		return
 	}
 
+	var filePaths []string
+	_ = json.Unmarshal([]byte(material.FileURL), &filePaths)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Material berhasil diperbarui",
 		"data": gin.H{
 			"id_material": material.IDMaterial,
 			"title":       material.Title,
 			"description": material.Description,
-			"file_path":   string(material.FileURL),
+			"file_paths":  filePaths,
 			"file_type":   material.FileType,
 		},
 	})

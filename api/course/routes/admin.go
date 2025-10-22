@@ -17,7 +17,7 @@ func AdminRoutes(r *gin.RouterGroup) {
 		courses.POST("", course.CreateCourse)
 		courses.GET("", course.GetAllCourses)
 		courses.GET("/:id", course.GetCourseByID)
-		courses.PATCH("/:id", course.UpdateCourse)
+		courses.PUT("/:id", course.UpdateCourse)
 		courses.DELETE("/:id", course.DeleteCourse)
 	}
 }

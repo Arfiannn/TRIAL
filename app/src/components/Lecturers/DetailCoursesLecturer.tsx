@@ -34,7 +34,12 @@ export default function DetailCourseLecturer() {
           getMajor(),
         ]);
 
-        const mahasiswa = studentData.filter((u) => u.roleId === 3);
+        const mahasiswa = studentData.filter(
+          (u) =>
+            u.roleId === 3 &&
+            u.semester === courseData.semester &&
+            u.majorId === courseData.majorId
+        );
 
         setCourse(courseData);
         setStudents(mahasiswa);
@@ -52,6 +57,8 @@ export default function DetailCourseLecturer() {
   if (loading) {
     return <p className="text-gray-400 text-center mt-10">Memuat data...</p>;
   }
+
+
 
   const major = majors.find((m) => m.id_major === course?.majorId);
 

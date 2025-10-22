@@ -7,7 +7,7 @@ type Course struct {
 	AdminID     uint      `gorm:"not null;column:adminId"`
 	LecturerID  uint      `gorm:"not null;column:lecturerId"`
 	MajorID     uint      `gorm:"not null;column:majorId"`
-	Semester    string    `gorm:"not null;column:semester"`
+	Semester    int       `gorm:"not null;column:semester"`
 	NameCourse  string    `gorm:"not null;column:name_course"`
 	Description string    `gorm:"not null;column:description"`
 	SKS         int       `gorm:"column:sks"`

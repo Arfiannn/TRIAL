@@ -17,15 +17,14 @@ func UploadMaterial(c *gin.Context) {
 
 	lecturerID := c.GetUint("user_id")
 
-	var input struct {
-		Title       string `json:"title" binding:"required"`
-		Description string `json:"description"`
-		FileURL     string `json:"file_url"`
-		CourseID    uint   `json:"course_id" binding:"required"`
-	}
-	
+	var input models.Material
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if input.Title == "" || input.CourseID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Title dan CourseID wajib diisi"})
 		return
 	}
 

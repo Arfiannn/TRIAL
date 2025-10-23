@@ -1,6 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockCourses, mockAssignments, mockMaterials, mockUser, mockMajor } from "@/utils/mockData";
 import { Button } from "../ui/button";
 import MaterialList from "./MaterialStudent";
 import AssignmentList from "./AssignmentStudent";
@@ -14,6 +13,8 @@ import { getMajor } from "../services/Major";
 import { getAllMaterialsForStudent } from "../services/Material";
 import { toast } from "sonner";
 import { getCoursesByIdForStudent } from "../services/Course";
+import type { Assignment } from "@/types/Assignment";
+import { getAllAssignments } from "../services/Assignment";
 
 export default function DetailCoursesStudent() {
   const { id } = useParams();
@@ -23,6 +24,7 @@ export default function DetailCoursesStudent() {
   const [lecturers, setLecturers] = useState<Users []>([]);
   const [majors, setMajors] = useState<Major[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [assignments, setAssignments] = useState<Assignment []>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -31,20 +33,23 @@ export default function DetailCoursesStudent() {
         setLoading(true);
         if (!id) return;
 
-        const [courseData, lecturerData, majorsData, materialsData] = await Promise.all([
+        const [courseData, lecturerData, majorsData, materialsData, assignmentData] = await Promise.all([
           getCoursesByIdForStudent(Number(id)),
           getAllUser(),
           getMajor(),
           getAllMaterialsForStudent(Number(id)),
+          getAllAssignments()
         ]);
 
         const dosen = lecturerData.filter(
           (u) => u.roleId === 2 && u.id_user === courseData.lecturerId
         );
+        const filtered = assignmentData.filter((a) => a.courseId === Number(id));
         setCourses(courseData);
         setLecturers(dosen);
         setMajors(majorsData);
-        setMaterials(materialsData);   
+        setMaterials(materialsData);  
+        setAssignments(filtered); 
       } catch (err: any) {
         console.error(err);
         toast.error("Gagal memuat data mata kuliah atau materi");
@@ -65,7 +70,7 @@ export default function DetailCoursesStudent() {
 
   const lecturer = lecturers.find((l) => l.id_user === courses.lecturerId);
   const major = majors.find((m) => m.id_major === courses.majorId);
-  const assignments = mockAssignments.filter((a) => a.courseId === Number(id));
+  // const assignments = mockAssignments.filter((a) => a.courseId === Number(id));
 
   return (
     <div className="space-y-6 text-white">

@@ -19,8 +19,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, FileText, Upload, File, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-import type { Assignment } from "@/types";
 import { mockCourses } from "@/utils/mockData";
+import type { Assignment } from "@/types/Assignment";
+import { getAssignmentFile } from "../services/Assignment";
 
 interface AssignmentListProps {
   assignments: Assignment[];
@@ -57,21 +58,21 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
 
     if (selectedAssignment) {
       toast.success(`Tugas "${selectedAssignment.title}" berhasil dikumpulkan!`);
-      setSubmitted((prev) => [...prev, selectedAssignment.id]);
+      setSubmitted((prev) => [...prev, selectedAssignment.id_assignment]);
     }
 
     if (selectedAssignment && selectedFile) {
-      const fileURL = URL.createObjectURL(selectedFile);
+      const file_url = URL.createObjectURL(selectedFile);
       setSubmittedFiles((prev) => ({
         ...prev,
-        [selectedAssignment.id]: { name: selectedFile.name, url: fileURL },
+        [selectedAssignment.id_assignment]: { name: selectedFile.name, url: file_url },
       }));
     }
 
     if (selectedAssignment && submissionText.trim()) {
       setSubmittedTexts((prev) => ({
         ...prev,
-        [selectedAssignment.id]: submissionText.trim(),
+        [selectedAssignment.id_assignment]: submissionText.trim(),
       }));
     }
 
@@ -84,15 +85,35 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
     setIsDialogOpen(false);
   };
 
+  async function handleViewFile(id: number) {
+    try {
+      const { blob, contentType } = await getAssignmentFile(id);
+      const fileURL = URL.createObjectURL(blob);
+
+      if (contentType === "application/pdf") {
+        window.open(fileURL, "_blank");
+      } else {
+        const link = document.createElement("a");
+        link.href = fileURL;
+        link.download = `assignment-${id}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  }
+
   return (
     <div className="grid gap-4">
       {assignments.map((assignment) => {
-        const isSubmitted = submitted.includes(assignment.id);
+        const isSubmitted = submitted.includes(assignment.id_assignment);
 
         const course = mockCourses.find((c) => c.id === assignment.courseId);
 
         return (
-          <Card key={assignment.id} className="bg-gray-800/50 border-gray-700">
+          <Card key={assignment.id_assignment} className="bg-gray-800/50 border-gray-700">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -101,17 +122,17 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                 </div>
                 <Badge
                   variant={
-                    new Date(assignment.dueDate) < new Date()
+                    new Date(assignment.deadline) < new Date()
                       ? "destructive"
                       : "default"
                   }
                   className={
-                    new Date(assignment.dueDate) < new Date()
+                    new Date(assignment.deadline) < new Date()
                       ? ""
                       : "bg-green-900/50 text-green-200"
                   }
                 >
-                  {new Date(assignment.dueDate) < new Date()
+                  {new Date(assignment.deadline) < new Date()
                     ? "Terlambat"
                     : isSubmitted
                       ? <div className="flex items-center gap-2">
@@ -131,8 +152,8 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
               <p className="text-gray-300">{assignment.description}</p>
               <Button
                 onClick={() => {
-                  if (assignment.fileUrl) {
-                    window.open(assignment.fileUrl, "_blank");
+                  if (assignment.file_url) {
+                    handleViewFile(assignment.id_assignment);
                   } else {
                     toast.error("File tugas belum tersedia!");
                   }
@@ -148,7 +169,7 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   Deadline:{" "}
-                  {new Date(assignment.dueDate).toLocaleString("id-ID", {
+                  {new Date(assignment.deadline).toLocaleString("id-ID", {
                     day: "2-digit",
                     month: "short",
                     year: "numeric",
@@ -160,11 +181,11 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
 
               {isSubmitted ? (
                   <div className="space-y-3">
-                    {submittedFiles[assignment.id] && (
+                    {submittedFiles[assignment.id_assignment] && (
                       <Button
                         className="flex items-center justify-between border border-blue-700 rounded-md p-3 bg-blue-900/20 "
                         onClick={() => {
-                          const fileData = submittedFiles[assignment.id];
+                          const fileData = submittedFiles[assignment.id_assignment];
                           if (fileData?.url) {
                             window.open(fileData.url, "_blank");
                           } else {
@@ -174,20 +195,20 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                       >
                         <div className="flex items-center gap-2 text-sm text-blue-300">
                           <File className="h-4 w-4 text-blue-400" />
-                          <p>{submittedFiles[assignment.id]?.name}</p>
+                          <p>{submittedFiles[assignment.id_assignment]?.name}</p>
                         </div>
                       </Button>
                     )}
 
                     {/* ✅ Jika ada jawaban teks */}
-                    {submittedTexts[assignment.id] && (
+                    {submittedTexts[assignment.id_assignment] && (
                       <div className="border border-gray-600 bg-gray-900/10 rounded-md p-3">
                         <div className="flex items-center gap-2 mb-1">
                           <CheckCircle className="h-4 w-4 text-green-400" />
                           <p className="text-gray-400 text-sm">Jawaban teks terkirim</p>
                         </div>
                         <p className="text-gray-200 text-sm whitespace-pre-wrap">
-                          {submittedTexts[assignment.id]}
+                          {submittedTexts[assignment.id_assignment]}
                         </p>
                       </div>
                     )}

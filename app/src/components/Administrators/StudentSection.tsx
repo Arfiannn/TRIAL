@@ -189,7 +189,7 @@ export default function StudentsTab() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-400">
-                Mendaftar: {new Date(student.created_at).toLocaleDateString("id-ID")}
+                Mendaftar: {new Date(student.created_at).toLocaleString("id-ID")}
               </p>
             </CardContent>
           </Card>

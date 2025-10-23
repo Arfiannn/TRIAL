@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Card,
   CardHeader,
@@ -19,8 +19,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, FileText, Upload, File, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-import type { Assignment } from "@/types";
 import { mockCourses } from "@/utils/mockData";
+import type { Assignment } from "@/types/Assignment";
+import { getAssignmentFile } from "../services/Assignment";
+import { createSubmission, getAllSubmissions } from "../services/Submission"
 
 interface AssignmentListProps {
   assignments: Assignment[];
@@ -31,11 +33,48 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
   const [submissionText, setSubmissionText] = useState("");
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [submitted, setSubmitted] = useState<number[]>([]); // simpan ID tugas yang sudah dikumpulkan
+  const [submitted, setSubmitted] = useState<number []>([]);
   const [submittedFiles, setSubmittedFiles] = useState<Record<number, { name: string; url: string }>>({});
   const [submittedTexts, setSubmittedTexts] = useState<Record<number, string>>({});
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        const submissions = await getAllSubmissions();
+
+        // Ambil ID assignment yang sudah dikumpulkan
+        const submittedIds = submissions.map((s) => s.assignmentId);
+        setSubmitted(submittedIds);
+
+        // 📝 Mapping jawaban teks & file
+        const fileMap: Record<number, { name: string; url: string }> = {};
+        const textMap: Record<number, string> = {};
+
+        submissions.forEach((s) => {
+          if (s.file_url) {
+            fileMap[s.assignmentId] = {
+              name: s.file_url.split("/").pop() || "file",
+              url: s.file_url,
+            };
+          }
+          if (s.description) {
+            textMap[s.assignmentId] = s.description;
+          }
+        });
+
+        setSubmittedFiles(fileMap);
+        setSubmittedTexts(textMap);
+
+      } catch (err: any) {
+        console.error(err);
+        toast.error(err.message);
+      }
+    };
+
+    fetchSubmissions();
+  }, []);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -49,50 +88,82 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
     fileInputRef.current?.click();
   };
 
-  const handleSubmitAssignment = () => {
+  const handleSubmitAssignment = async () => {
     if (!submissionText.trim() && !selectedFile) {
       toast.error("Silakan isi jawaban atau upload file terlebih dahulu");
       return;
     }
 
-    if (selectedAssignment) {
-      toast.success(`Tugas "${selectedAssignment.title}" berhasil dikumpulkan!`);
-      setSubmitted((prev) => [...prev, selectedAssignment.id]);
+    if (!selectedAssignment) return;
+
+    try {
+      const res = await createSubmission({
+        assignmentId: selectedAssignment.id_assignment,
+        description: submissionText,
+        file: selectedFile || null,
+      });
+
+      toast.success(`Tugas "${selectedAssignment.title}" berhasil dikumpulkan ✅`);
+      setSubmitted((prev) => [...prev, selectedAssignment.id_assignment]);
+
+      if (selectedFile) {
+        const file_url = URL.createObjectURL(selectedFile);
+        setSubmittedFiles((prev) => ({
+          ...prev,
+          [selectedAssignment.id_assignment]: {
+            name: selectedFile.name,
+            url: file_url,
+          },
+        }));
+      }
+
+      if (submissionText.trim()) {
+        setSubmittedTexts((prev) => ({
+          ...prev,
+          [selectedAssignment.id_assignment]: submissionText.trim(),
+        }));
+      }
+
+      console.log("📤 Response BE:", res);
+    } catch (error: any) {
+      toast.error(error.message || "Gagal mengumpulkan tugas ❌");
+    } finally {
+      setSubmissionText("");
+      setSelectedFile(null);
+      setSelectedAssignment(null);
+      setIsDialogOpen(false);
     }
-
-    if (selectedAssignment && selectedFile) {
-      const fileURL = URL.createObjectURL(selectedFile);
-      setSubmittedFiles((prev) => ({
-        ...prev,
-        [selectedAssignment.id]: { name: selectedFile.name, url: fileURL },
-      }));
-    }
-
-    if (selectedAssignment && submissionText.trim()) {
-      setSubmittedTexts((prev) => ({
-        ...prev,
-        [selectedAssignment.id]: submissionText.trim(),
-      }));
-    }
-
-    console.log("📁 File dikirim:", selectedFile);
-    console.log("📝 Jawaban:", submissionText);
-
-    setSubmissionText("");
-    setSelectedFile(null);
-    setSelectedAssignment(null);
-    setIsDialogOpen(false);
   };
+
+  async function handleViewFile(id: number) {
+    try {
+      const { blob, contentType } = await getAssignmentFile(id);
+      const fileURL = URL.createObjectURL(blob);
+
+      if (contentType === "application/pdf") {
+        window.open(fileURL, "_blank");
+      } else {
+        const link = document.createElement("a");
+        link.href = fileURL;
+        link.download = `assignment-${id}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  }
 
   return (
     <div className="grid gap-4">
       {assignments.map((assignment) => {
-        const isSubmitted = submitted.includes(assignment.id);
+        const isSubmitted = submitted.includes(assignment.id_assignment);
 
         const course = mockCourses.find((c) => c.id === assignment.courseId);
 
         return (
-          <Card key={assignment.id} className="bg-gray-800/50 border-gray-700">
+          <Card key={assignment.id_assignment} className="bg-gray-800/50 border-gray-700">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -101,17 +172,17 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                 </div>
                 <Badge
                   variant={
-                    new Date(assignment.dueDate) < new Date()
+                    new Date(assignment.deadline) < new Date()
                       ? "destructive"
                       : "default"
                   }
                   className={
-                    new Date(assignment.dueDate) < new Date()
+                    new Date(assignment.deadline) < new Date()
                       ? ""
                       : "bg-green-900/50 text-green-200"
                   }
                 >
-                  {new Date(assignment.dueDate) < new Date()
+                  {new Date(assignment.deadline) < new Date()
                     ? "Terlambat"
                     : isSubmitted
                       ? <div className="flex items-center gap-2">
@@ -131,8 +202,8 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
               <p className="text-gray-300">{assignment.description}</p>
               <Button
                 onClick={() => {
-                  if (assignment.fileUrl) {
-                    window.open(assignment.fileUrl, "_blank");
+                  if (assignment.file_url) {
+                    handleViewFile(assignment.id_assignment);
                   } else {
                     toast.error("File tugas belum tersedia!");
                   }
@@ -148,7 +219,7 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   Deadline:{" "}
-                  {new Date(assignment.dueDate).toLocaleString("id-ID", {
+                  {new Date(assignment.deadline).toLocaleString("id-ID", {
                     day: "2-digit",
                     month: "short",
                     year: "numeric",
@@ -160,13 +231,13 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
 
               {isSubmitted ? (
                   <div className="space-y-3">
-                    {submittedFiles[assignment.id] && (
+                    {submittedFiles[assignment.id_assignment] && (
                       <Button
                         className="flex items-center justify-between border border-blue-700 rounded-md p-3 bg-blue-900/20 "
                         onClick={() => {
-                          const fileData = submittedFiles[assignment.id];
+                          const fileData = submittedFiles[assignment.id_assignment];
                           if (fileData?.url) {
-                            window.open(fileData.url, "_blank");
+                            handleViewFile(assignment.id_assignment);
                           } else {
                             toast.error("File tidak ditemukan!");
                           }
@@ -174,20 +245,19 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                       >
                         <div className="flex items-center gap-2 text-sm text-blue-300">
                           <File className="h-4 w-4 text-blue-400" />
-                          <p>{submittedFiles[assignment.id]?.name}</p>
+                          <p>Lihat Submission</p>
                         </div>
                       </Button>
                     )}
 
-                    {/* ✅ Jika ada jawaban teks */}
-                    {submittedTexts[assignment.id] && (
+                    {submittedTexts[assignment.id_assignment] && (
                       <div className="border border-gray-600 bg-gray-900/10 rounded-md p-3">
                         <div className="flex items-center gap-2 mb-1">
                           <CheckCircle className="h-4 w-4 text-green-400" />
                           <p className="text-gray-400 text-sm">Jawaban teks terkirim</p>
                         </div>
                         <p className="text-gray-200 text-sm whitespace-pre-wrap">
-                          {submittedTexts[assignment.id]}
+                          {submittedTexts[assignment.id_assignment]}
                         </p>
                       </div>
                     )}
@@ -224,7 +294,6 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                           rows={6}
                         />
   
-                        {/* Input file tersembunyi */}
                         <input
                           type="file"
                           ref={fileInputRef}
@@ -232,7 +301,6 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                           className="hidden"
                         />
   
-                        {/* Tombol upload file */}
                         {selectedFile == null && (
                           <Button
                             onClick={handleUploadClick}
@@ -245,7 +313,6 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                           </Button>
                         )}
   
-                        {/* Tampilkan nama file yang dipilih */}
                         {selectedFile && (
                           <div className="inline-block text-sm text-gray-300 border border-gray-500 rounded-sm py-2 px-2">
                             <File className="inline-block w-4 h-4 mr-2 text-blue-400" />

@@ -132,7 +132,7 @@ export default function LecturersTab() {
             <CardContent>
               <p className="text-sm text-gray-400">
                 Mendaftar:{" "}
-                {new Date(lecturer.created_at).toLocaleDateString("id-ID")}
+                {new Date(lecturer.created_at).toLocaleString("id-ID")}
               </p>
             </CardContent>
           </Card>

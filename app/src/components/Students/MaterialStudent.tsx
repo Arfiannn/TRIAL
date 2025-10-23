@@ -2,19 +2,40 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "../ui
 import { Button } from "../ui/button";
 import { BookOpen, FileText } from "lucide-react";
 import { toast } from "sonner";
-import type { Material } from "@/types";
+import type { Material } from "@/types/Material";
+import { viewMateriFileStudent } from "../services/Material";
 
 interface MaterialListProps {
   materials: Material[];
 }
 
 export default function MaterialList({ materials }: MaterialListProps) {
+  
+  async function handleViewFile(id: number) {
+    try {
+      const { blob, contentType } = await viewMateriFileStudent(id);
+      const fileURL = URL.createObjectURL(blob);
+
+      if (contentType === "application/pdf") {
+        window.open(fileURL, "_blank");
+      } else {
+        const link = document.createElement("a");
+        link.href = fileURL;
+        link.download = `material-${id}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  }
 
   return (
     <div className="space-y-4">
       {materials.map((m) => (
         <Card
-          key={m.id}
+          key={m.id_material}
           className="bg-gray-800/50 border-gray-700 hover:border-blue-500 transition flex flex-row items-center"
         >
           <div className="w-full">
@@ -24,7 +45,17 @@ export default function MaterialList({ materials }: MaterialListProps) {
                 <CardTitle className="text-white">{m.title}</CardTitle>
               </div>
               <CardDescription className="text-gray-400 text-sm">
-                Dibuat pada {m.createdAt.toLocaleDateString("id-ID")}
+                Dibuat pada{" "}
+                  {new Date(m.created_at).toLocaleDateString("id-ID", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                  ,{" "}
+                  {new Date(m.created_at).toLocaleTimeString("id-ID", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
               </CardDescription>
             </CardHeader>
 
@@ -33,8 +64,8 @@ export default function MaterialList({ materials }: MaterialListProps) {
 
               <Button
                 onClick={() => {
-                  if (m.fileUrl) {
-                    window.open(m.fileUrl, "_blank");
+                  if (m.file_url) {
+                    handleViewFile(m.id_material);
                   } else {
                     toast.error("File materi belum tersedia!");
                   }

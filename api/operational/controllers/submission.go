@@ -88,6 +88,7 @@ func GetAllSubmission(c *gin.Context) {
 			"status":        s.Status,
 			"submitted_at":  s.SubmittedAt,
 			"file_type":     s.FileType,
+			"file_url":      s.FileURL,
 		})
 	}
 
@@ -110,6 +111,7 @@ func GetSubmissionByID(c *gin.Context) {
 		"status":        sub.Status,
 		"submitted_at":  sub.SubmittedAt,
 		"file_type":     sub.FileType,
+		"file_url":      sub.FileURL,
 	})
 }
 

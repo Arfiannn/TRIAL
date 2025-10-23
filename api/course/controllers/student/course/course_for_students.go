@@ -30,7 +30,7 @@ func GetCoursesByStudent(c *gin.Context) {
 
 	var courses []models.Course
 	if err := config.DB.
-		Where("majorId = ? AND semester = ?", student.MajorID, student.Semester).
+		Where("majorId = ?", student.MajorID).
 		Find(&courses).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data course"})
 		return

@@ -6,4 +6,5 @@ export interface UserPending {
   name: string;
   email: string;
   password: string;
+  created_at: Date;
 }

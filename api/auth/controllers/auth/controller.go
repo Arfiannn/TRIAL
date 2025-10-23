@@ -6,6 +6,7 @@ import (
 	"auth-service/config"
 	"auth-service/models"
 	"auth-service/utils"
+
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -41,8 +42,12 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"token": token,
 		"user": gin.H{
-			"id":        user.ID,
-			"roleId":   user.RoleID,
-		},
+			"id_user":   user.ID,
+			"semester":  user.Semester,
+			"name":      user.Name,
+			"majorId":   user.MajorID,
+			"facultyId": user.FacultyID,
+			"roleId":    user.RoleID,
+		}, 
 	})
 }

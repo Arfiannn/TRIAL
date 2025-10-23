@@ -24,7 +24,7 @@ import { useNavigate } from "react-router-dom";
 import TimeKeeper from "react-timekeeper"
 import ValidationDialog from "../ValidationDialog";
 import type { Assignment } from "@/types/Assignment";
-import { createAssignment, deleteAssignment, getAllAssignments, updateAssignment } from "../services/Assignment";
+import { createAssignment, deleteAssignment, getAllAssignments, getAssignmentFile, updateAssignment } from "../services/Assignment";
 import type { Major } from "@/types/Major";
 import { getMajor } from "../services/Major";
 
@@ -172,6 +172,28 @@ export default function AssignmentTab({ courseId }: Props) {
     }
   };
 
+  async function handleViewAssignment(id: number) {
+    try {
+      const { blob, contentType } = await getAssignmentFile(id);
+      const fileURL = URL.createObjectURL(blob);
+
+      // Kalau file PDF → buka di tab baru
+      if (contentType === "application/pdf") {
+        window.open(fileURL, "_blank");
+      } else {
+        // Selain PDF, bisa pakai download langsung
+        const link = document.createElement("a");
+        link.href = fileURL;
+        link.download = `assignment-${id}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  }
+
   const handleDeleteAssignment = async (id: number, title: string) => {
     try{
       await deleteAssignment(id);
@@ -246,7 +268,7 @@ export default function AssignmentTab({ courseId }: Props) {
                     className="bg-gray-700 border border-gray-600 text-white"
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.open(a.file_url || "#", "_blank");
+                      handleViewAssignment(a.id_assignment)
                     }}
                   >
                     <File className="h-4 w-4" /> {a.title}

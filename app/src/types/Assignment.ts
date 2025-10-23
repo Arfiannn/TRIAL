@@ -13,7 +13,7 @@ export interface AssignmentInput {
   courseId: number;
   title: string;
   description: string;
-  deadline: string; // format: "YYYY-MM-DD HH:mm:ss"
+  deadline: string;
   file?: File | null;
   file_url?: string | null;
   file_type?: string | null;

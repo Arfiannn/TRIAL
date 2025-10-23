@@ -21,6 +21,26 @@ export async function getAllAssignments(): Promise<Assignment[]> {
   return data;
 }
 
+export async function getAssignmentById(id: number): Promise<Assignment> {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${OPERATIONAL_BASE_URL}/assignments/${id}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Gagal mengambil assignment: ${errorText}`);
+  }
+
+  const data = await res.json();
+  return data; // backend langsung kirim objek assignment, bukan { data: {...} }
+}
+
 export async function createAssignment(input: AssignmentInput): Promise<Assignment> {
   const token = localStorage.getItem("token");
 
@@ -49,13 +69,13 @@ export async function updateAssignment(
   data: Partial<AssignmentInput>
 ): Promise<Assignment> {
   const token = localStorage.getItem("token");
-
   const formData = new FormData();
+
   if (data.title) formData.append("title", data.title);
   if (data.description) formData.append("description", data.description);
   if (data.deadline) formData.append("deadline", data.deadline);
-  if (data.file_url) formData.append("file_url", data.file_url);
-  if (data.file_type) formData.append("file_type", data.file_type);
+
+  if (data.file) formData.append("file_url", data.file);
 
   const res = await fetch(`${OPERATIONAL_BASE_URL}/assignments/${id}`, {
     method: "PUT",
@@ -65,11 +85,14 @@ export async function updateAssignment(
     body: formData,
   });
 
-  if (!res.ok) throw new Error("Gagal memperbarui tugas");
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(errText || "Gagal memperbarui tugas");
+  }
+
   const result = await res.json();
   return result.data || result;
 }
-
 
 export async function deleteAssignment(id: number): Promise<void> {
   const token = localStorage.getItem("token");
@@ -84,4 +107,25 @@ export async function deleteAssignment(id: number): Promise<void> {
 
   if (res.status === 401) throw new Error("Unauthorized: Token tidak valid atau sudah kadaluarsa");
   if (!res.ok) throw new Error("Gagal menghapus tugas");
+}
+
+export async function getAssignmentFile(id: number): Promise<{ blob: Blob; contentType: string }> {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${OPERATIONAL_BASE_URL}/assignments/${id}/file`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Gagal mengambil file: ${errorText}`);
+  }
+
+  const blob = await res.blob();
+  const contentType = res.headers.get("Content-Type") || "application/octet-stream";
+
+  return { blob, contentType };
 }

@@ -73,6 +73,7 @@ func CreateAssignment(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Tugas berhasil dibuat",
+		"data":    assignment,
 	})
 }
 

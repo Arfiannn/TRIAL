@@ -1,21 +1,51 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockCourses, mockMajor } from '@/utils/mockData';
 import { BookOpen, Calendar, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/components/auth/AuthContext';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Course } from '@/types/Course';
+import type { Major } from '@/types/Major';
+import { getCoursesByLecturer } from '../services/Course';
+import { getMajor } from '../services/Major';
+import { toast } from 'sonner';
+import { formatTime } from '../FormatTime';
 
 export const LecturerDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+
   const navigate = useNavigate();
-  const [ semesterFilter, setSemesterFilter ]  = useState<string>("Semua");
+  const [semesterFilter, setSemesterFilter]  = useState<string>("Semua");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [majors, setMajors] = useState<Major[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect (() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const [courses, majors] = await Promise.all([
+          getCoursesByLecturer(),
+          getMajor(),
+        ])
+        setCourses(courses);
+        setMajors(majors);
+      } catch (err) {
+        console.error(err);
+        toast.error("Gagal memuat data mata kuliah dan program studi");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [])
 
  const teachingCourses = useMemo(() => {
-    return mockCourses.filter((course) => course.lecturerId === user?.id);
-  }, [user]);
+    if (!user) return [];
+    return courses.filter((course) => course.lecturerId === user.id_user);
+  }, [user, courses]); // ✅ tambahkan courses
 
   // 🔹 Ambil semester unik dari daftar course dosen ini
   const availableSemesters = useMemo(() => {
@@ -80,27 +110,27 @@ export const LecturerDashboard: React.FC = () => {
 
           <div className="grid gap-4 md:grid-cols-2">
             {filteredCourses.map((course) => {
-              const major = mockMajor.find((m) => m.id === course.majorId)
+              const major = majors.find((m) => m.id_major === course.majorId)
 
               return (
                 <Card 
-                  key={course.id} 
+                  key={course.id_course} 
                   className="bg-gray-800/50 border-gray-700"
-                  onClick={() => handleToDetailCourses(course.id)}
+                  onClick={() => handleToDetailCourses(course.id_course)}
                 >
                   <CardHeader>
                     <div className='flex items-end'>
                       <div className='flex items-center gap-2'>
                         <BookOpen className="h-5 w-5 text-blue-400" />
-                        <CardTitle className="text-white">{course.name}</CardTitle>
+                        <CardTitle className="text-white">{course.name_course}</CardTitle>
                       </div>
-                      <p className='text-gray-400 ml-3 text-[13px]'>| {course.credits} SKS</p>
+                      <p className='text-gray-400 ml-3 text-[13px]'>| {course.sks} SKS</p>
                     </div>
                     <CardDescription className='text-gray-400 flex gap-2'>
                       <Badge variant="outline" className="border-blue-600 text-blue-300">
                         Semester {course.semester}
                       </Badge>
-                      {major?.name}
+                      {major?.name_major}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="text-gray-400">
@@ -119,7 +149,7 @@ export const LecturerDashboard: React.FC = () => {
                         size={15}
                         className="text-gray-400"
                       />
-                      <p className="text-[13px] text-gray-400"> {course.startTime} - {course.endTime}</p>
+                      <p className="text-[13px] text-gray-400"> {formatTime(course.start_time)} - {formatTime(course.end_time)}</p>
                     </div>
                     <p className="text-gray-300 text-sm mt-4">{course.description}</p>
                   </CardContent>
@@ -127,7 +157,7 @@ export const LecturerDashboard: React.FC = () => {
               )
             })}
           </div>
-          {teachingCourses.length === 0 && (
+          {!loading && teachingCourses.length === 0 && (
             <Card className="bg-gray-800/50 border-gray-700">
               <CardContent className="pt-6 text-center">
                 <BookOpen className="h-12 w-12 text-gray-500 mx-auto mb-4" />

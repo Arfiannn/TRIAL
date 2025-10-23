@@ -30,19 +30,19 @@ func GetCoursesByStudent(c *gin.Context) {
 
 	var courses []models.Course
 	if err := config.DB.
-		Where("semester = ? AND facultyId = ? AND majorId = ?", student.Semester, student.FacultyID, student.MajorID).
+		Where("majorId = ? AND semester = ?", student.MajorID, student.Semester).
 		Find(&courses).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data course"})
 		return
 	}
 
 	if len(courses) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"message": "Tidak ada course yang cocok untuk mahasiswa ini"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "Tidak ada course untuk jurusan dan semester ini"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Berhasil mengambil course sesuai semester, fakultas, dan jurusan mahasiswa",
+		"message": "Berhasil mengambil course berdasarkan jurusan dan semester mahasiswa",
 		"data":    courses,
 	})
 }

@@ -10,6 +10,8 @@ import (
 
 func UpdateMaterial(c *gin.Context) {
 	roleID := c.GetUint("role_id")
+	userID := c.GetUint("user_id")
+
 	if roleID != 2 {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Hanya lecturer yang boleh mengubah material"})
 		return
@@ -29,24 +31,20 @@ func UpdateMaterial(c *gin.Context) {
 		return
 	}
 
-	if course.LecturerID != c.GetUint("user_id") {
+	if course.LecturerID != userID {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Kamu tidak punya akses untuk mengubah material dari course ini"})
 		return
 	}
 
-	var input struct {
-		Title       string `json:"title"`
-		Description string `json:"description"`
-		FileURL     string `json:"file_url"`
-	}
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	title := c.PostForm("title")
+	description := c.PostForm("description")
 
-	material.Title = input.Title
-	material.Description = input.Description
-	material.FileURL = input.FileURL
+	if title != "" {
+		material.Title = title
+	}
+	if description != "" {
+		material.Description = description
+	}
 
 	if err := config.DB.Save(&material).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui material"})
@@ -55,5 +53,11 @@ func UpdateMaterial(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Material berhasil diperbarui",
-		"data":    material})
+		"data": gin.H{
+			"id_material": material.IDMaterial,
+			"title":       material.Title,
+			"description": material.Description,
+			"file_type":   material.FileType,
+		},
+	})
 }

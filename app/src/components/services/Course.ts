@@ -1,6 +1,62 @@
 import { COURSE_BASE_URL } from "@/lib/api";
 import type { Course, CourseInput } from "@/types/Course";
 
+export async function getAllCourses(): Promise<Course[]> {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${COURSE_BASE_URL}/admin/courses`, {
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+  });
+
+  if (!res.ok) throw new Error('Gagal menemukan mata kuliah');
+
+  const data = await res.json();
+  return data.data || [];
+}
+
+export async function getCoursesByLecturer(): Promise<Course[]> {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${COURSE_BASE_URL}/lecturer/courses`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) { 
+    const errorText = await res.text();
+    throw new Error(`Gagal mengambil course: ${errorText}`);
+  }
+
+  const data = await res.json();
+  return data.data || [];
+}
+
+export async function getCoursesById(id_course: number): Promise<Course> {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${COURSE_BASE_URL}/lecturer/courses/${id_course}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) { 
+    const errorText = await res.text();
+    throw new Error(`Gagal mengambil course: ${errorText}`);
+  }
+
+  const data = await res.json();
+  return data.data;
+}
+
 export async function createCourse(params: CourseInput): Promise<Course> {
   const token = localStorage.getItem("token");
   
@@ -46,22 +102,6 @@ export async function updateCourse(
   return data.data;
 }
 
-export async function getAllCourses(): Promise<Course[]> {
-  const token = localStorage.getItem("token");
-
-  const res = await fetch(`${COURSE_BASE_URL}/admin/courses`, {
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
-    },
-  });
-
-  if (!res.ok) throw new Error('Gagal menemukan mata kuliah');
-
-  const data = await res.json();
-  return data.data || [];
-}
-
 export async function deleteCourse(id: number): Promise<void> {
   const token = localStorage.getItem("token");
 
@@ -76,4 +116,3 @@ export async function deleteCourse(id: number): Promise<void> {
   if (res.status === 401) throw new Error("Unauthorized: Token tidak valid atau sudah kadaluarsa");
   if (!res.ok) throw new Error("Gagal menghapus user pending");
 }
-

@@ -7,7 +7,7 @@ type Submission struct {
 	AssignmentID uint      `gorm:"column:assignmentId" json:"assignmentId"`
 	StudentID    uint      `gorm:"column:studentId" json:"studentId"`
 	Description  string    `gorm:"column:description" json:"description"`
-	FileURL      []byte    `gorm:"column:file_url" json:"-"`
+	FileURL      []byte    `gorm:"column:file_url" json:"file_url"`
 	FileType     string    `gorm:"column:file_type" json:"file_type"`
 	Status       string    `gorm:"column:status" json:"status"`
 	SubmittedAt  time.Time `gorm:"column:submitted_at" json:"submitted_at"`

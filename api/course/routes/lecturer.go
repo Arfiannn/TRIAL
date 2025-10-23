@@ -20,10 +20,12 @@ func LecturerRoutes(r *gin.RouterGroup) {
 		materials.GET("/:id", material.GetMaterialByID)
 		materials.PUT("/:id", material.UpdateMaterial)
 		materials.DELETE("/:id", material.DeleteMaterial)
+		materials.GET("/:id/file", material.GetMaterialFile)
 	}
 
 	courses := lecturer.Group("/courses")
 	{
-		courses.GET("", course.GetCoursesByLecturerID)
+		courses.GET("", course.GetAllCoursesByLecturerID)
+		courses.GET("/:id", course.GetCourseByID)
 	}
 }

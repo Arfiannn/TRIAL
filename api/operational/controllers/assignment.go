@@ -49,7 +49,8 @@ func CreateAssignment(c *gin.Context) {
 		}
 	}
 
-	deadline, err := time.Parse("2006-01-02 15:04:05", deadlineStr)
+	loc, _ := time.LoadLocation("Asia/Makassar")
+	deadline, err := time.ParseInLocation("2006-01-02 15:04:05", deadlineStr, loc)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Format deadline salah"})
 		return
@@ -96,7 +97,7 @@ func GetAssignmentByID(c *gin.Context) {
 }
 
 func UpdateAssignment(c *gin.Context) {
-	// only lecturer
+
 	if c.GetUint("role_id") != 2 {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Only lecturer can update assignments"})
 		return
@@ -120,7 +121,8 @@ func UpdateAssignment(c *gin.Context) {
 		assignment.Description = description
 	}
 	if deadlineStr != "" {
-		if d, err := time.Parse("2006-01-02T15:04:05", deadlineStr); err == nil {
+		loc, _ := time.LoadLocation("Asia/Makassar")
+		if d, err := time.ParseInLocation("2006-01-02 15:04:05", deadlineStr, loc); err == nil {
 			assignment.Deadline = d
 		}
 	}
@@ -145,18 +147,24 @@ func UpdateAssignment(c *gin.Context) {
 }
 
 func DeleteAssignment(c *gin.Context) {
-	// only lecturer
 	if c.GetUint("role_id") != 2 {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Only lecturer can delete assignments"})
 		return
 	}
 
 	id := c.Param("id")
-	if err := config.DB.Delete(&models.Assignment{}, "id_assignment = ?", id).Error; err != nil {
+	var assignment models.Assignment
+	if err := config.DB.First(&assignment, "id_assignment = ?", id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Assignment not found"})
+		return
+	}
+
+	if err := config.DB.Delete(&assignment).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete assignment"})
 		return
 	}
-	c.Status(http.StatusNoContent)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Assignment deleted (soft)"})
 }
 
 func GetAssignmentFile(c *gin.Context) {

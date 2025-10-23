@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetCoursesByLecturerID(c *gin.Context) {
+func GetAllCoursesByLecturerID(c *gin.Context) {
 	lecturerID := c.GetUint("user_id")
 	roleID := c.GetUint("role_id")
 
@@ -28,6 +28,24 @@ func GetCoursesByLecturerID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": courses})
+	c.JSON(http.StatusOK, gin.H{"data": courses})
+}
+
+func GetCourseByID(c *gin.Context) {
+	lecturerID := c.GetUint("user_id")
+	roleID := c.GetUint("role_id")
+	courseID := c.Param("id")
+
+	if roleID != 2 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Hanya lecturer yang dapat mengakses course ini"})
+		return
+	}
+
+	var course models.Course
+	if err := config.DB.Where("id_course = ? AND lecturerId = ?", courseID, lecturerID).First(&course).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Course tidak ditemukan atau bukan milik Anda"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": course})
 }

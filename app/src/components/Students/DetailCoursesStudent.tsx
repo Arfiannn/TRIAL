@@ -4,13 +4,58 @@ import { mockCourses, mockAssignments, mockMaterials, mockUser, mockMajor } from
 import { Button } from "../ui/button";
 import MaterialList from "./MaterialStudent";
 import AssignmentList from "./AssignmentStudent";
+import type { Course } from "@/types/Course";
+import { useEffect, useState } from "react";
+import type { Users } from "@/types/User";
+import type { Major } from "@/types/Major";
+import type { Material } from "@/types/Material";
+import { getAllUser } from "../services/User";
+import { getMajor } from "../services/Major";
+import { getAllMaterialsForStudent } from "../services/Material";
+import { toast } from "sonner";
+import { getCoursesByIdForStudent } from "../services/Course";
 
 export default function DetailCoursesStudent() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const course = mockCourses.find((c) => c.id === Number(id));
 
-  if (!course) {
+  const [courses, setCourses] = useState<Course | null>(null);
+  const [lecturers, setLecturers] = useState<Users []>([]);
+  const [majors, setMajors] = useState<Major[]>([]);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        if (!id) return;
+
+        const [courseData, lecturerData, majorsData, materialsData] = await Promise.all([
+          getCoursesByIdForStudent(Number(id)),
+          getAllUser(),
+          getMajor(),
+          getAllMaterialsForStudent(Number(id)),
+        ]);
+
+        const dosen = lecturerData.filter(
+          (u) => u.roleId === 2 && u.id_user === courseData.lecturerId
+        );
+        setCourses(courseData);
+        setLecturers(dosen);
+        setMajors(majorsData);
+        setMaterials(materialsData);   
+      } catch (err: any) {
+        console.error(err);
+        toast.error("Gagal memuat data mata kuliah atau materi");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [id]);
+
+  if (!courses) {
     return (
       <p className="text-gray-400 text-center mt-10">
         Mata kuliah tidak ditemukan.
@@ -18,16 +63,8 @@ export default function DetailCoursesStudent() {
     );
   }
 
-  // 🧠 Cari dosen pengajar
-  const lecturer = mockUser.find(
-    (u) => u.id === course.lecturerId && u.role === "dosen"
-  );
-
-  // 🧠 Cari jurusan berdasarkan majorId dari course
-  const majorData = mockMajor.find((m) => m.id === course.majorId);
-
-  // Filter materi dan tugas berdasarkan courseId
-  const materials = mockMaterials.filter((m) => m.courseId === Number(id));
+  const lecturer = lecturers.find((l) => l.id_user === courses.lecturerId);
+  const major = majors.find((m) => m.id_major === courses.majorId);
   const assignments = mockAssignments.filter((a) => a.courseId === Number(id));
 
   return (
@@ -35,9 +72,9 @@ export default function DetailCoursesStudent() {
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">{course.name}</h1>
+          <h1 className="text-2xl font-bold">{courses.name_course}</h1>
           <p className="text-gray-400">
-            {majorData?.name || "Jurusan tidak diketahui"} • {course.credits} SKS • {lecturer?.name || "Dosen belum ditentukan"}
+            {major?.name_major || "Jurusan tidak diketahui"} • {courses.sks} SKS • {lecturer?.name|| "Dosen belum ditentukan"}
           </p>
         </div>
         <Button
@@ -74,7 +111,7 @@ export default function DetailCoursesStudent() {
         <TabsContent value="all" className="space-y-4">
           <h2 className="text-xl font-semibold text-white">Materi</h2>
 
-          {materials.length > 0 || assignments.length > 0 ? (
+          {!loading && (materials.length > 0 || assignments.length > 0) ? (
             <div className="grid gap-4">
               {materials.length > 0 && <MaterialList materials={materials} />}
               {assignments.length > 0 && <AssignmentList assignments={assignments} />}
@@ -85,7 +122,7 @@ export default function DetailCoursesStudent() {
         </TabsContent>
 
         <TabsContent value="material" className="space-y-4">
-          {materials.length > 0 ? (
+          {!loading && materials.length > 0 ? (
             <MaterialList materials={materials} />
           ) : (
             <p className="text-gray-400 text-sm">Belum ada materi.</p>
@@ -93,7 +130,7 @@ export default function DetailCoursesStudent() {
         </TabsContent>
 
         <TabsContent value="assignment" className="space-y-4">
-          {assignments.length > 0 ? (
+          {!loading && assignments.length > 0 ? (
             <AssignmentList assignments={assignments} />
           ) : (
             <p className="text-gray-400 text-sm">Belum ada tugas.</p>

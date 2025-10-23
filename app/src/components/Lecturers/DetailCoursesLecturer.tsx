@@ -8,7 +8,7 @@ import MaterialTab from "./MaterialLecturer";
 import { toast } from "sonner";
 import type { Course } from "@/types/Course";
 import type { Users } from "@/types/User";
-import { getCoursesById } from "../services/Course";
+import { getCoursesByIdForLecturer } from "../services/Course";
 import { getAllUser } from "../services/User";
 import type { Major } from "@/types/Major";
 import { getMajor } from "../services/Major";
@@ -29,7 +29,7 @@ export default function DetailCourseLecturer() {
         if (!id) return;
 
         const [courseData, studentData, majorsData] = await Promise.all([
-          getCoursesById(Number(id)),
+          getCoursesByIdForLecturer(Number(id)),
           getAllUser(),
           getMajor(),
         ]);

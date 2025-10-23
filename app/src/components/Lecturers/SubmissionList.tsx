@@ -16,7 +16,7 @@ import { getAssignmentById } from "../services/Assignment";
 import { getAllSubmissions } from "../services/Submission";
 import { getAllUser } from "../services/User";
 import { getMajor } from "../services/Major";
-import { getCoursesById } from "../services/Course";
+import { getCoursesByIdForLecturer } from "../services/Course";
 
 interface StudentSubmission {
   id: number;
@@ -51,7 +51,7 @@ export default function SubmissionStudentPage() {
         const [submissions, users, course, majors] = await Promise.all([
           getAllSubmissions(),
           getAllUser(),
-          getCoursesById(assignment.courseId),
+          getCoursesByIdForLecturer(assignment.courseId),
           getMajor(),
         ]);
 

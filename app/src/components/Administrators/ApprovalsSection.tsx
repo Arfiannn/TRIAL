@@ -185,7 +185,7 @@ export default function pendingsTab() {
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-400">
                       Mendaftar:{" "}
-                      {new Date(pending.created_at).toLocaleDateString("id-ID")}
+                      {new Date(pending.created_at).toLocaleString("id-ID")}
                     </p>
                     <div className="flex gap-2">
                       <Button
@@ -292,7 +292,7 @@ export default function pendingsTab() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-400">
-                      Mendaftar: {new Date(pending.created_at).toLocaleDateString("id-ID")}
+                      Mendaftar: {new Date(pending.created_at).toLocaleString("id-ID")}
                     </p>
                     <div className="flex gap-2">
                       <Button

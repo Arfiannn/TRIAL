@@ -3,6 +3,7 @@ package material
 import (
 	"course-service/config"
 	"course-service/models"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -18,7 +19,6 @@ func UpdateMaterial(c *gin.Context) {
 	}
 
 	id := c.Param("id")
-
 	var material models.Material
 	if err := config.DB.First(&material, "id_material = ?", id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Material tidak ditemukan"})
@@ -36,14 +36,30 @@ func UpdateMaterial(c *gin.Context) {
 		return
 	}
 
-	title := c.PostForm("title")
-	description := c.PostForm("description")
-
-	if title != "" {
+	if title := c.PostForm("title"); title != "" {
 		material.Title = title
 	}
-	if description != "" {
+	if description := c.PostForm("description"); description != "" {
 		material.Description = description
+	}
+
+	file, err := c.FormFile("file_url")
+	if err == nil {
+		f, err := file.Open()
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Gagal membaca file yang diupload"})
+			return
+		}
+		defer f.Close()
+
+		fileBytes, err := io.ReadAll(f)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membaca isi file"})
+			return
+		}
+
+		material.FileURL = fileBytes
+		material.FileType = file.Header.Get("Content-Type")
 	}
 
 	if err := config.DB.Save(&material).Error; err != nil {

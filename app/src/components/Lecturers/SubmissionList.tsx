@@ -13,19 +13,20 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { getAssignmentById } from "../services/Assignment";
-import { getAllSubmissions } from "../services/Submission";
+import { getAllSubmissions, getSubmissionFile } from "../services/Submission";
 import { getAllUser } from "../services/User";
 import { getMajor } from "../services/Major";
 import { getCoursesByIdForLecturer } from "../services/Course";
 
 interface StudentSubmission {
-  id: number;
+  id_user: number;
+  id_submission?: number | null; 
   name: string;
   email: string;
   major: string;
   hasSubmitted: boolean;
   isLate: boolean;
-  submittedAt?: string;
+  submitted_at?: string;
   fileUrl?: string | null;
   text?: string;
 }
@@ -76,21 +77,21 @@ export default function SubmissionStudentPage() {
 
           const isLate =
             submission && assignment.deadline
-              ? new Date(submission.submittedAt).getTime() >
+              ? new Date(submission.submitted_at).getTime() >
                 new Date(assignment.deadline).getTime()
               : false;
 
           return {
-            id: stu.id_user,
+            id_user: stu.id_user,
+            id_submission: submission?.id_submission ?? null, // 🟢 ambil dari BE
             name: stu.name,
             email: stu.email,
             major:
-              majors.find((m) => m.id_major === stu.majorId)?.name_major ||
-              "Unknown",
+              majors.find((m) => m.id_major === stu.majorId)?.name_major || "Unknown",
             hasSubmitted: !!submission,
             isLate,
-            submittedAt: submission?.submittedAt
-              ? new Date(submission.submittedAt).toISOString()
+            submitted_at: submission?.submitted_at
+              ? new Date(submission.submitted_at).toISOString()
               : undefined,
             fileUrl: submission?.file_url,
             text: submission?.description || "",
@@ -116,6 +117,26 @@ export default function SubmissionStudentPage() {
     if (filterStatus === "Belum Dikirim") return !s.hasSubmitted;
     return true;
   });
+
+  async function handleViewFile(id: number) {
+    try {
+      const { blob, contentType } = await getSubmissionFile(id);
+      const fileURL = URL.createObjectURL(blob);
+
+      if (contentType === "application/pdf") {
+        window.open(fileURL, "_blank");
+      } else {
+        const link = document.createElement("a");
+        link.href = fileURL;
+        link.download = `submission-${id}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -163,7 +184,7 @@ export default function SubmissionStudentPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStudents.map((s) => (
             <Card
-              key={s.id}
+              key={s.id_user}
               className="bg-gray-800/50 border border-gray-700 hover:border-blue-700 transition-all"
             >
               <CardHeader>
@@ -203,8 +224,8 @@ export default function SubmissionStudentPage() {
                   <div className="grid gap-2">
                     <p className="text-gray-400 text-sm">
                       Dikirim:{" "}
-                      {s.submittedAt &&
-                        new Date(s.submittedAt).toLocaleString("id-ID", {
+                      {s.submitted_at &&
+                        new Date(s.submitted_at).toLocaleString("id-ID", {
                           day: "2-digit",
                           month: "short",
                           year: "numeric",
@@ -223,11 +244,11 @@ export default function SubmissionStudentPage() {
                       </div>
                     )}
 
-                    {s.fileUrl && (
+                    {s.fileUrl && s.id_submission && (
                       <Button
                         size="sm"
                         className="bg-gray-700 border border-gray-600 text-white flex gap-1"
-                        onClick={() => window.open(s.fileUrl || "#", "_blank")}
+                        onClick={() => handleViewFile(s.id_submission!)}
                       >
                         <Eye size={14} /> Lihat File
                       </Button>

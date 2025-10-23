@@ -1,20 +1,20 @@
-export interface Assignment {
-  id_assignment: number;
+export interface Material {
+  id_material: number;
   courseId: number;
   title: string;
   description: string;
-  deadline: string;
-  file_url: string | null;
+  file?: File | null;
+  file_url?: string | null;
   file_type?: string | null;
   created_at: Date;
 }
 
-export interface AssignmentInput {
+export interface MaterialInput {
   courseId: number;
   title: string;
   description: string;
-  deadline: string;
   file?: File | null;
   file_url?: string | null;
   file_type?: string | null;
+  created_at: Date;
 }

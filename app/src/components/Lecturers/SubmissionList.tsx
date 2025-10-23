@@ -5,80 +5,110 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileCheck2, FileX, Eye, ArrowLeft, ClockAlert } from "lucide-react";
 import {
-  mockUser,
-  mockAssignments,
-  mockSubmissions,
-  mockCourses,
-  mockUserApproved,
-  mockMajor,
-} from "@/utils/mockData";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
+import { getAssignmentById } from "../services/Assignment";
+import { getAllSubmissions } from "../services/Submission";
+import { getAllUser } from "../services/User";
+import { getMajor } from "../services/Major";
+import { getCoursesById } from "../services/Course";
+
+interface StudentSubmission {
+  id: number;
+  name: string;
+  email: string;
+  major: string;
+  hasSubmitted: boolean;
+  isLate: boolean;
+  submittedAt?: string;
+  fileUrl?: string | null;
+  text?: string;
+}
 
 export default function SubmissionStudentPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
-  const [students, setStudents] = useState<any[]>([]);
+  const [students, setStudents] = useState<StudentSubmission[]>([]);
   const [assignmentTitle, setAssignmentTitle] = useState<string>("");
   const [filterStatus, setFilterStatus] = useState<string>("Semua");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!assignmentId) return;
+    async function fetchData() {
+      if (!assignmentId) return;
 
-    const assignment = mockAssignments.find(
-      (a) => a.id === Number(assignmentId)
-    );
-    if (!assignment) return;
+      try {
+        setLoading(true);
 
-    setAssignmentTitle(assignment.title);
+        const assignment = await getAssignmentById(Number(assignmentId));
+        setAssignmentTitle(assignment.title);
 
-    const course = mockCourses.find((c) => c.id === assignment.courseId);
-    if (!course) return;
+        const [submissions, users, course, majors] = await Promise.all([
+          getAllSubmissions(),
+          getAllUser(),
+          getCoursesById(assignment.courseId),
+          getMajor(),
+        ]);
 
-    const approvedStudents = mockUserApproved
-      .map((a) => mockUser.find((u) => u.id === a.userId))
-      .filter(
-        (u) =>
-          u &&
-          u.role === "mahasiswa" &&
-          u.majorId === course.majorId &&
-          u.semester === course.semester
-      );
+        if (!course) {
+          toast.error("Course tidak ditemukan untuk assignment ini");
+          return;
+        }
 
-    const mergedData = approvedStudents.map((stu) => {
-      const submission = mockSubmissions.find(
-        (s) =>
-          s.assignmentId === Number(assignmentId) && s.studentId === stu?.id
-      );
+        const mahasiswa = users.filter(
+          (u) =>
+            u.roleId === 3 &&
+            u.majorId === course.majorId &&
+            u.semester === course.semester
+        );
 
-      const isLate =
-        submission && assignment.dueDate
-          ? new Date(submission.submittedAt).getTime() >
-            new Date(assignment.dueDate).getTime()
-          : false;
+        const mergedData = mahasiswa.map((stu) => {
+          const submission = submissions.find(
+            (s) =>
+              s.assignmentId === Number(assignmentId) &&
+              s.studentId === stu.id_user
+          );
 
-      return {
-        id: stu?.id,
-        name: stu?.name,
-        email: stu?.email,
-        major: mockMajor.find((m) => m.id === stu?.majorId)?.name || "Unknown",
-        hasSubmitted: !!submission,
-        isLate,
-        submittedAt: submission?.submittedAt,
-        fileUrl: submission?.fileUrl,
-        text: submission?.text || "",
-      };
-    });
+          const isLate =
+            submission && assignment.deadline
+              ? new Date(submission.submittedAt).getTime() >
+                new Date(assignment.deadline).getTime()
+              : false;
 
-    setStudents(mergedData);
+          return {
+            id: stu.id_user,
+            name: stu.name,
+            email: stu.email,
+            major:
+              majors.find((m) => m.id_major === stu.majorId)?.name_major ||
+              "Unknown",
+            hasSubmitted: !!submission,
+            isLate,
+            submittedAt: submission?.submittedAt
+              ? new Date(submission.submittedAt).toISOString()
+              : undefined,
+            fileUrl: submission?.file_url,
+            text: submission?.description || "",
+          };
+        });
+
+        setStudents(mergedData);
+      } catch (err: any) {
+        console.error(err);
+        toast.error(err.message || "Gagal memuat data submission mahasiswa");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
   }, [assignmentId]);
 
-  // === Filter Logic ===
   const filteredStudents = students.filter((s) => {
     if (filterStatus === "Semua") return true;
     if (filterStatus === "Submitted") return s.hasSubmitted && !s.isLate;
@@ -109,7 +139,6 @@ export default function SubmissionStudentPage() {
         </div>
       </div>
 
-      {/* === Filter Dropdown === */}
       <div className="flex justify-end">
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-[180px] bg-gray-800 border-gray-700 text-gray-200">
@@ -124,7 +153,9 @@ export default function SubmissionStudentPage() {
         </Select>
       </div>
 
-      {filteredStudents.length === 0 ? (
+      {loading ? (
+        <p className="text-gray-400 italic text-center">Memuat data...</p>
+      ) : filteredStudents.length === 0 ? (
         <p className="text-gray-400 italic">
           Tidak ada mahasiswa dengan status "{filterStatus}".
         </p>
@@ -183,15 +214,15 @@ export default function SubmissionStudentPage() {
                         })}
                     </p>
 
-                    {/* === Jika submit by text === */}
                     {s.text && (
                       <div className="p-3 border border-gray-700 bg-gray-900/50 rounded-md text-gray-300 text-sm">
-                        <p className="font-semibold text-blue-400 mb-1">Jawaban:</p>
+                        <p className="font-semibold text-blue-400 mb-1">
+                          Jawaban:
+                        </p>
                         <p className="whitespace-pre-line">{s.text}</p>
                       </div>
                     )}
 
-                    {/* === Jika submit by file === */}
                     {s.fileUrl && (
                       <Button
                         size="sm"

@@ -24,7 +24,7 @@ import { useNavigate } from "react-router-dom";
 import TimeKeeper from "react-timekeeper"
 import ValidationDialog from "../ValidationDialog";
 import type { Assignment } from "@/types/Assignment";
-import { createAssignment, deleteAssignment, getAllAssignments, updateAssignment } from "../services/Assignment";
+import { createAssignment, deleteAssignment, getAllAssignments, getAssignmentFile, updateAssignment } from "../services/Assignment";
 import type { Major } from "@/types/Major";
 import { getMajor } from "../services/Major";
 
@@ -38,10 +38,10 @@ export default function AssignmentTab({ courseId }: Props) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Assignment | null>(null);
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false)
-  const [tempDate, setTempDate] = useState<string>("")
+  const [, setTempDate] = useState<string>("")
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false); 
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
 
   useEffect(() => {
     async function fetchAssignments() {
@@ -103,7 +103,7 @@ export default function AssignmentTab({ courseId }: Props) {
         title: assignment.title,
         description: assignment.description,
         deadlineDate: date.toISOString().split("T")[0],
-        deadlineTime: date.toTimeString().slice(0, 5), // ambil HH:mm
+        deadlineTime: date.toTimeString().slice(0, 5),
       });
       setFile(null);
       setFileUrl(assignment.file_url || null);
@@ -121,14 +121,12 @@ export default function AssignmentTab({ courseId }: Props) {
     setIsDialogOpen(true);
   };
 
-  /** ===================== SAVE ===================== */
   const handleSaveAssignment = async () => {
     if (!formData.title || !formData.description || !formData.deadlineDate) {
       toast.error("Lengkapi semua field tugas!");
       return;
     }
 
-    // Format ke backend
     const formattedDeadline = `${formData.deadlineDate} ${formData.deadlineTime || "23:59"}:00`;
 
     try {
@@ -172,6 +170,26 @@ export default function AssignmentTab({ courseId }: Props) {
     }
   };
 
+  async function handleViewFile(id: number) {
+    try {
+      const { blob, contentType } = await getAssignmentFile(id);
+      const fileURL = URL.createObjectURL(blob);
+
+      if (contentType === "application/pdf") {
+        window.open(fileURL, "_blank");
+      } else {
+        const link = document.createElement("a");
+        link.href = fileURL;
+        link.download = `assignment-${id}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  }
+
   const handleDeleteAssignment = async (id: number, title: string) => {
     try{
       await deleteAssignment(id);
@@ -184,7 +202,6 @@ export default function AssignmentTab({ courseId }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* === Tombol Tambah === */}
       <div className="flex justify-end items-center">
         <Button
           onClick={() => handleOpenDialog()}
@@ -246,7 +263,7 @@ export default function AssignmentTab({ courseId }: Props) {
                     className="bg-gray-700 border border-gray-600 text-white"
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.open(a.file_url || "#", "_blank");
+                      handleViewFile(a.id_assignment)
                     }}
                   >
                     <File className="h-4 w-4" /> {a.title}

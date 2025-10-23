@@ -7,35 +7,63 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  mockCourses,
-  mockUser,
-  mockUserApproved,
-  mockMajor,
-} from "@/utils/mockData";
 import { Archive, BookOpen, Calendar, Clock, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
 import { Button } from "../ui/button";
+import { useEffect, useState } from "react";
+import type { Course } from "@/types/Course";
+import type { Major } from "@/types/Major";
+import { getCoursesByStudent } from "../services/Course";
+import { getMajor } from "../services/Major";
+import { toast } from "sonner";
+import type { Users } from "@/types/User";
+import { getAllUser } from "../services/User";
+import { formatTime } from "../FormatTime";
 
 export const StudentDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+
   const navigate = useNavigate();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [majors, setMajors] = useState<Major[]>([]);
+  const [lecturers, setLecturers] = useState<Users []>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect (() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const [courses, majors, lecturer] = await Promise.all([
+          getCoursesByStudent(),
+          getMajor(),
+          getAllUser(),
+        ])
+        const approvedLecturers = lecturer.filter((u) => u.roleId === 2);
+        setLecturers(approvedLecturers);
+        setCourses(courses);
+        setMajors(majors);
+      } catch (err) {
+        console.error(err);
+        toast.error("Gagal memuat data mata kuliah dan program studi");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   const currentSemester = user!.semester ?? 1;
   const currentMajorId = user!.majorId;
 
-  // 🔍 Ambil nama jurusan berdasarkan majorId mahasiswa
-  const majorData = mockMajor.find((m) => m.id === currentMajorId);
-  // 🔍 Filter course berdasarkan jurusan & semester
-  const currentCourses = mockCourses.filter(
-    (course) =>
-      course.majorId === currentMajorId && course.semester === currentSemester
+  const majorData = majors.find((m) => m.id_major === currentMajorId);
+
+  const currentCourses = courses.filter(
+    (course) => course.semester === currentSemester
   );
 
-  const archivedCourses = mockCourses.filter(
-    (course) =>
-      course.majorId === currentMajorId && course.semester < currentSemester
+  const archivedCourses = courses.filter(
+    (course) =>course.semester < currentSemester
   );
 
   const handleToDetailCourses = (courseId: number) => {
@@ -44,7 +72,7 @@ export const StudentDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* HEADER */}
+      
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Dashboard Mahasiswa</h1>
@@ -76,26 +104,21 @@ export const StudentDashboard: React.FC = () => {
         <TabsContent value="courses" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             {currentCourses.map((course) => {
-              const approved = mockUserApproved.find(
-                (a) => a.userId === course.lecturerId
-              );
-              const lecturer = approved
-                ? mockUser.find((u) => u.id === approved.userId)
-                : null;
+              const dosen = lecturers.find((u) => u.id_user === course.lecturerId);
 
               return (
                 <Card
-                  key={course.id}
+                  key={course.id_course}
                   className="bg-gray-800/50 border-gray-700 cursor-pointer hover:border-blue-500 transition"
-                  onClick={() => handleToDetailCourses(course.id)}
+                  onClick={() => handleToDetailCourses(course.id_course)}
                 >
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       <BookOpen className="h-5 w-5 text-blue-400" />
-                      <CardTitle className="text-white">{course.name}</CardTitle>
+                      <CardTitle className="text-white">{course.name_course}</CardTitle>
                     </div>
                     <CardDescription className="text-gray-400">
-                      {majorData?.name} | {course.credits} SKS
+                      {majorData?.name_major} | {course.sks} SKS
                     </CardDescription>
                   </CardHeader>
 
@@ -103,7 +126,7 @@ export const StudentDashboard: React.FC = () => {
                     <div className="flex gap-2 items-center">
                       <User size={15} className="text-gray-400" />
                       <p className="text-[13px] text-gray-400">
-                        {lecturer ? lecturer.name : "Belum disetujui admin"}
+                        {dosen ? dosen.name : "Belum disetujui admin"}
                       </p>
                     </div>
                     <div className="flex gap-2 items-center py-2">
@@ -113,7 +136,7 @@ export const StudentDashboard: React.FC = () => {
                     <div className="flex gap-2 items-center">
                       <Clock size={15} className="text-gray-400" />
                       <p className="text-[13px] text-gray-400">
-                        {course.startTime} - {course.endTime}
+                        {formatTime(course.start_time)} - {formatTime(course.end_time)}
                       </p>
                     </div>
                   </CardContent>
@@ -136,24 +159,20 @@ export const StudentDashboard: React.FC = () => {
         <TabsContent value="archived" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             {archivedCourses.map((course) => {
-              const approved = mockUserApproved.find(
-                (a) => a.userId === course.lecturerId
-              );
-              const lecturer = approved
-                ? mockUser.find((u) => u.id === approved.userId)
-                : null;
+
+              const lecturer = lecturers.find((u) => u.id_user === course.lecturerId);
 
               return (
-                <Card key={course.id} className="bg-gray-800/30 border-gray-700">
+                <Card key={course.id_course} className="bg-gray-800/30 border-gray-700">
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       <Archive className="h-5 w-5 text-gray-500" />
                       <CardTitle className="text-gray-300">
-                        {course.name}
+                        {course.name_course}
                       </CardTitle>
                     </div>
                     <CardDescription className="text-gray-500">
-                      {course.credits} SKS •{" "}
+                      {course.sks} SKS •{" "}
                       {lecturer ? lecturer.name : "Belum disetujui admin"}
                     </CardDescription>
                   </CardHeader>
@@ -172,7 +191,7 @@ export const StudentDashboard: React.FC = () => {
                     </div>
                     <div className="mt-4">
                       <Button
-                        onClick={() => handleToDetailCourses(course.id)}
+                        onClick={() => handleToDetailCourses(course.id_course)}
                         size="sm"
                         variant="outline"
                         className="border-gray-600 text-gray-300 hover:bg-gray-800 text-black"
@@ -186,7 +205,7 @@ export const StudentDashboard: React.FC = () => {
             })}
           </div>
 
-          {archivedCourses.length === 0 && (
+          {!loading && archivedCourses.length === 0 && (
             <Card className="bg-gray-800/50 border-gray-700">
               <CardContent className="pt-6 text-center">
                 <Archive className="h-12 w-12 text-gray-500 mx-auto mb-4" />

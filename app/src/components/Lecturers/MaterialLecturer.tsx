@@ -19,9 +19,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { BookOpen, Upload, Plus, FileText, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { mockCourses, mockMaterials } from "@/utils/mockData";
 import ValidationDialog from "../ValidationDialog";
-import type { Material } from "@/types";
+import type { Material, MaterialInput } from "@/types/Material";
+import type { Course } from "@/types/Course";
+import { getCoursesByLecturer } from "../services/Course";
+import { createMaterial, deleteMaterial, getAllMaterial, getMaterialFile, updateMaterial } from "../services/Material";
 
 interface Props {
   courseId: number;
@@ -29,102 +31,154 @@ interface Props {
 
 export default function MaterialTab({ courseId }: Props) {
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [, setLoading] = useState(false);
 
-  const course = mockCourses.find((c) => c.id === courseId)
-
-  useEffect(() => {
-    const filtered = mockMaterials.filter(m => m.courseId === courseId);
-    setMaterials(filtered);
-  }, [courseId]);
-
-  const [newMaterial, setNewMaterial] = useState({ 
-    title: "", 
-    description: "" 
+  const [newMaterial, setNewMaterial] = useState({
+    title: "",
+    description: "",
   });
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Material | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false); 
+  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const [materialsRes, coursesRes] = await Promise.all([
+          getAllMaterial(),
+          getCoursesByLecturer(),
+        ]);
+
+        const filteredMaterials = materialsRes.filter(
+          (m) => m.courseId === courseId
+        );
+        setMaterials(filteredMaterials);
+        setCourses(coursesRes);
+      } catch (err: any) {
+        console.error(err);
+        toast.error("Gagal memuat materi dan mata kuliah");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [courseId]);
+
+  const course = courses.find((c) => c.id_course === courseId);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) {
       setFile(selected);
-      const url = URL.createObjectURL(selected);
-      setFileUrl(url);
+      setFileUrl(URL.createObjectURL(selected));
       toast.info(`File dipilih: ${selected.name}`);
     }
   };
+
   const handleFileClick = () => fileRef.current?.click();
 
-  const handleOpenDialog = (materials?: Material) => {
-    if (materials) {
-      setEditing(materials);
+  const handleOpenDialog = (material?: Material) => {
+    if (material) {
+      setEditing(material);
       setNewMaterial({
-        title: materials.title,
-        description: materials.description,
-      })
+        title: material.title,
+        description: material.description,
+      });
       setFile(null);
-      setFileUrl(materials.fileUrl || null);
+      setFileUrl(material.file_url || null);
     } else {
       setEditing(null);
       setNewMaterial({
         title: "",
         description: "",
-      })
+      });
       setFile(null);
       setFileUrl(null);
     }
     setIsDialogOpen(true);
-  }
+  };
 
-  const handleSaveMaterial = () => {
+  const handleSaveMaterial = async () => {
     if (!newMaterial.title || !newMaterial.description) {
       toast.error("Lengkapi semua field materi!");
       return;
     }
 
-    if(editing) {
-      const update = {
-        ...editing,
-        ...newMaterial,
-        file,
-        fileUrl: file ? fileUrl : editing.fileUrl,
-      };
-      setMaterials((prev) => 
-        prev.map((m) => (m.id === editing.id ? update : m))
-      );
-      toast.success(`Materi "${newMaterial.title}" berhasil diperbarui!`);
+    try {
+      if (editing) {
+        const updatedInput: Partial<MaterialInput> = {
+          title: newMaterial.title,
+          description: newMaterial.description,
+          file: file || null,
+        };
 
-      setIsDialogOpen(false);
-    } else {
+        const updated = await updateMaterial(editing.id_material, updatedInput);
 
-      const newDataMaterial: Material = {
-        id: Date.now(),
-        courseId,
-        title: newMaterial.title,
-        description: newMaterial.description,
-        fileUrl,
-        createdAt: new Date(),
-      };
-      setMaterials((prev) => [...prev, newDataMaterial]);
-      toast.success(`Materi "${newMaterial.title}" berhasil dibuat!`);
-  
+        setMaterials((prev) =>
+          prev.map((m) =>
+            m.id_material === editing.id_material ? updated : m
+          )
+        );
+
+        toast.success(`Materi "${newMaterial.title}" berhasil diperbarui!`);
+      } else {
+        const newInput: MaterialInput = {
+          courseId,
+          title: newMaterial.title,
+          description: newMaterial.description,
+          file: file || null,
+          created_at: new Date(),
+        };
+
+        const created = await createMaterial(newInput);
+
+        setMaterials((prev) => [...prev, created]);
+        toast.success(`Materi "${newMaterial.title}" berhasil dibuat!`);
+      }
       setEditing(null);
       setFile(null);
       setFileUrl(null);
       setIsDialogOpen(false);
+    } catch (err: any) {
+      console.error("❌ Gagal simpan material:", err);
+      toast.error(err.message || "Terjadi kesalahan saat menyimpan materi");
     }
-
-
   };
 
-  const handleDeleteMaterial = (id: number, title: string) => {
-    setMaterials((prev) => prev.filter((a) => a.id !== id));
-    toast.success(`Materi: ${title} berhasil dihapus!`);
+  async function handleViewFile(id: number) {
+    try {
+      const { blob, contentType } = await getMaterialFile(id);
+      const fileURL = URL.createObjectURL(blob);
+
+      if (contentType === "application/pdf") {
+        window.open(fileURL, "_blank");
+      } else {
+        const link = document.createElement("a");
+        link.href = fileURL;
+        link.download = `material-${id}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  }
+
+  const handleDeleteMaterial = async (id: number, title: string) => {
+    try { 
+      await deleteMaterial(id);
+      setMaterials((prev) =>prev.filter((a) => a.id_material !== id));
+      toast.success(`Materi: ${title} berhasil dihapus!`);
+    } catch (err:any) {
+      toast.error(err.message || "Gagal menghapus materi");
+    }
   };
 
   return (
@@ -133,9 +187,13 @@ export default function MaterialTab({ courseId }: Props) {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="bg-gray-900 border-gray-700">
             <DialogHeader>
-              <DialogTitle className="text-white">Tambah Materi Baru</DialogTitle>
+              <DialogTitle className="text-white">
+                {editing ? "Edit Materi" : "Tambah Materi Baru"}
+              </DialogTitle>
               <DialogDescription className="text-gray-400">
-                Tambahkan materi pembelajaran untuk {course?.name}
+                {editing
+                  ? `Ubah materi ${editing.title}`
+                  : `Tambahkan materi pembelajaran untuk ${course?.name_course || "mata kuliah"}`}
               </DialogDescription>
             </DialogHeader>
 
@@ -160,7 +218,6 @@ export default function MaterialTab({ courseId }: Props) {
               />
 
               <div className="flex items-end gap-3">
-
                 <div className="w-full">
                   <Label className="text-gray-200">Upload File</Label>
                   <input
@@ -185,11 +242,11 @@ export default function MaterialTab({ courseId }: Props) {
                       className="bg-gray-800 border border-gray-700 inline-flex text-white"
                       onClick={() => window.open(fileUrl!, "_blank")}
                     >
-                      <FileText size={16} className="mr-1 text-blue-400" />{file ? file.name : newMaterial.title}
+                      <FileText size={16} className="mr-1 text-blue-400" />
+                      {file ? file.name : newMaterial.title}
                     </Button>
                   </div>
                 )}
-
               </div>
 
               <Button
@@ -198,8 +255,7 @@ export default function MaterialTab({ courseId }: Props) {
               >
                 Simpan Materi
               </Button>
-              </div>
-
+            </div>
           </DialogContent>
         </Dialog>
       </div>
@@ -213,6 +269,7 @@ export default function MaterialTab({ courseId }: Props) {
             <Plus className="h-4 w-4" /> Tambah Materi
           </Button>
         </div>
+
         {materials.length === 0 ? (
           <p className="text-gray-400 text-center py-6">
             Belum ada materi yang dibuat.
@@ -220,7 +277,10 @@ export default function MaterialTab({ courseId }: Props) {
         ) : (
           <div className="grid gap-4">
             {materials.map((m) => (
-              <Card key={m.id} className="bg-gray-800/50 border-gray-700">
+              <Card
+                key={m.id_material}
+                className="bg-gray-800/50 border-gray-700"
+              >
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
@@ -228,18 +288,24 @@ export default function MaterialTab({ courseId }: Props) {
                       <CardTitle className="text-white">{m.title}</CardTitle>
                     </div>
                     <Badge className="bg-gray-600 border-gray-300">
-                      {new Date(m.createdAt).toLocaleDateString("id-ID")}
+                      {new Date(m.created_at).toLocaleDateString("id-ID", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                      })}
                     </Badge>
                   </div>
                 </CardHeader>
+
                 <CardContent>
                   <p className="text-gray-300 mb-2">{m.description}</p>
-                  {m.fileUrl && (
+
+                  {m.file_url && (
                     <Button
                       size="sm"
                       variant="outline"
                       className="bg-gray-700 border border-gray-600 text-white"
-                      onClick={() => window.open(m.fileUrl || "#", "_blank")}
+                      onClick={() => handleViewFile(m.id_material)}
                     >
                       <FileText /> {m.title}
                     </Button>
@@ -255,21 +321,24 @@ export default function MaterialTab({ courseId }: Props) {
 
                     <Button
                       onClick={() => {
-                        setSelectedMaterial(m)
-                        setOpenDeleteDialog(true)
+                        setSelectedMaterial(m);
+                        setOpenDeleteDialog(true);
                       }}
                       className="bg-red-700 border border-red-600 flex gap-2"
                     >
                       <Trash2 className="h-4 w-4" /> Hapus
                     </Button>
 
-                    <ValidationDialog 
+                    <ValidationDialog
                       title={`Apakah anda yakin Menghapus Materi: ${selectedMaterial?.title ?? ""}? `}
                       open={openDeleteDialog}
                       onClose={() => setOpenDeleteDialog(false)}
                       onVal={() => {
                         if (selectedMaterial) {
-                          handleDeleteMaterial(selectedMaterial.id, selectedMaterial.title);
+                          handleDeleteMaterial(
+                            selectedMaterial.id_material,
+                            selectedMaterial.title
+                          );
                         }
                         setOpenDeleteDialog(false);
                       }}
@@ -282,7 +351,6 @@ export default function MaterialTab({ courseId }: Props) {
           </div>
         )}
       </div>
-
     </div>
   );
 }

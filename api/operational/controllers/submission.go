@@ -67,7 +67,8 @@ func CreateSubmission(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Tugas berhasil dikumpulkan"})
+	c.JSON(http.StatusCreated, gin.H{"message": "Tugas berhasil dikumpulkan",
+		"data": sub})
 }
 
 func GetAllSubmission(c *gin.Context) {

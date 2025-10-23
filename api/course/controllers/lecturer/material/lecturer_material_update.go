@@ -58,6 +58,7 @@ func UpdateMaterial(c *gin.Context) {
 			"title":       material.Title,
 			"description": material.Description,
 			"file_type":   material.FileType,
+			"file_url":    material.FileURL,
 		},
 	})
 }

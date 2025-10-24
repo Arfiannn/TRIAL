@@ -40,10 +40,12 @@ func CreateSubmission(c *gin.Context) {
 		status = "Terlambat"
 	}
 
+	FileName := ""
 	file, err := c.FormFile("file_url")
 	var fileBytes []byte
 	var fileType string
 	if err == nil {
+		FileName = file.Filename
 		f, err := file.Open()
 		if err == nil {
 			defer f.Close()
@@ -57,6 +59,7 @@ func CreateSubmission(c *gin.Context) {
 		StudentID:    userID,
 		Description:  description,
 		FileURL:      fileBytes,
+		FileName:     FileName,
 		FileType:     fileType,
 		Status:       status,
 		SubmittedAt:  now,
@@ -89,6 +92,7 @@ func GetAllSubmission(c *gin.Context) {
 			"submitted_at":  s.SubmittedAt,
 			"file_type":     s.FileType,
 			"file_url":      s.FileURL,
+			"file_name":     s.FileName,
 		})
 	}
 
@@ -112,6 +116,7 @@ func GetSubmissionByID(c *gin.Context) {
 		"submitted_at":  sub.SubmittedAt,
 		"file_type":     sub.FileType,
 		"file_url":      sub.FileURL,
+		"file_name":     sub.FileName,
 	})
 }
 

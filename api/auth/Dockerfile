@@ -1,6 +1,6 @@
 FROM golang:1.25.1-alpine AS builder
 
-WORKDIR /api
+WORKDIR /auth
 
 COPY go.mod go.sum ./
 RUN go mod download
@@ -15,7 +15,7 @@ WORKDIR /root/
 
 RUN apk --no-cache add ca-certificates
 
-COPY --from=builder /app/main .
+COPY --from=builder /auth/main .
 
 EXPOSE 8001
 

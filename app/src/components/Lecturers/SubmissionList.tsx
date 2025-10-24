@@ -51,7 +51,7 @@ export default function SubmissionStudentPage() {
         setAssignmentTitle(assignment.title);
 
         const [submissions, users, course, majors] = await Promise.all([
-          getAllSubmissions(),
+          (await getAllSubmissions()) || [],
           getAllUser(),
           getCoursesByIdForLecturer(assignment.courseId),
           getMajor(),
@@ -70,7 +70,7 @@ export default function SubmissionStudentPage() {
         );
 
         const mergedData = mahasiswa.map((stu) => {
-          const submission = submissions.find(
+          const submission = submissions?.find?.(
             (s) =>
               s.assignmentId === Number(assignmentId) &&
               s.studentId === stu.id_user

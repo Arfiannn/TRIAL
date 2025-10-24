@@ -23,9 +23,11 @@ import { getFaculty } from "../services/Faculty";
 import { toast } from "sonner";
 import type { Major } from "@/types/Major";
 import { getMajor } from "../services/Major";
+import { useUserRefresh } from "@/context/UserRefreshContext";
 
 export default function LecturersTab() {
 
+  const { refreshKey } = useUserRefresh();
 
   const [lecturer, setLecturer] = useState<Users[]>([]);
   const [faculties, setFaculties] = useState<Faculty[]>([])
@@ -41,15 +43,16 @@ export default function LecturersTab() {
     async function fetchData() {
       setLoading(true);
       try{
-        const [users, faculties, majors] = await Promise.all([
-          getAllUser(),
-          getFaculty(),
-          getMajor()
-        ])
+        const users = await getAllUser();
+
+        if (faculties.length === 0 || majors.length === 0) {
+          const [facultyData, majorData] = await Promise.all([getFaculty(), getMajor()]);
+          setFaculties(facultyData);
+          setMajors(majorData);
+        }
+
         const dosen = users.filter((u) => u.roleId === 2);
         setLecturer(dosen);
-        setFaculties(faculties);
-        setMajors(majors)
       } catch (err) {
         console.error(err);
         toast.error("Gagal memuat data dosen dan fakultas");
@@ -58,7 +61,7 @@ export default function LecturersTab() {
       }
     }
     fetchData();
-  }, []);
+  }, [refreshKey]);
 
   // ✅ Filter berdasarkan fakultas
   const filteredLecturer = lecturer.filter((lecturer) => {

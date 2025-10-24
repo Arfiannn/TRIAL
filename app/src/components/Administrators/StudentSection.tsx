@@ -23,8 +23,11 @@ import type { Users } from "@/types/User";
 import type { Major } from "@/types/Major";
 import { getAllUser, updateUserSemester } from "../services/User";
 import { getMajor } from "../services/Major";
+import { useUserRefresh } from "@/context/UserRefreshContext";
 
 export default function StudentsTab() {
+
+  const { refreshKey } = useUserRefresh();
 
   const [majorFilter, setMajorFilter] = useState<string>("Semua");
   const [semesterFilter, setSemesterFilter] = useState<string>("Semua");
@@ -35,7 +38,6 @@ export default function StudentsTab() {
   const [openSemesterDialog, setOpenSemesterDialog] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Ambil daftar major dari mockMajor
   const availableMajors = ["Semua", ...majors.map((m) => m.name_major)];
   const availableSemester = ["Semua", ...Array.from({ length: 14 }, (_, i) => (i + 1).toString())];
 
@@ -58,7 +60,7 @@ export default function StudentsTab() {
       }
     }
     fetchData();
-  }, []);
+  }, [refreshKey]);
 
   // ✅ Filter mahasiswa berdasarkan majorId dan semester
   const filteredStudents = useMemo(() => {

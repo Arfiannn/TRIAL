@@ -34,7 +34,7 @@ func GetMaterialsByCourseID(c *gin.Context) {
 
 	var course models.Course
 	if err := config.DB.
-		Where("id_course = ? AND majorId = ? AND semester = ?", courseID, student.MajorID, student.Semester).
+		Where("id_course = ? AND majorId", courseID, student.MajorID).
 		First(&course).Error; err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Kamu tidak punya akses ke course ini"})
 		return

@@ -23,7 +23,7 @@ import ValidationDialog from "../ValidationDialog";
 import type { Material, MaterialInput } from "@/types/Material";
 import type { Course } from "@/types/Course";
 import { getCoursesByLecturer } from "../services/Course";
-import { createMaterial, deleteMaterial, getAllMaterial, getMaterialFile, updateMaterial } from "../services/Material";
+import { createMaterial, deleteMaterial, getAllMaterialForLecturer, getMaterialFile, updateMaterial } from "../services/Material";
 
 interface Props {
   courseId: number;
@@ -51,7 +51,7 @@ export default function MaterialTab({ courseId }: Props) {
       setLoading(true);
       try {
         const [materialsRes, coursesRes] = await Promise.all([
-          getAllMaterial(),
+          getAllMaterialForLecturer(),
           getCoursesByLecturer(),
         ]);
 

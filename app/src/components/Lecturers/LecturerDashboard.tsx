@@ -10,7 +10,6 @@ import type { Major } from '@/types/Major';
 import { getCoursesByLecturer } from '../services/Course';
 import { getMajor } from '../services/Major';
 import { toast } from 'sonner';
-import { formatTime } from '../FormatTime';
 
 export const LecturerDashboard: React.FC = () => {
   const storedUser = localStorage.getItem("user");
@@ -147,7 +146,7 @@ export const LecturerDashboard: React.FC = () => {
                         size={15}
                         className="text-gray-400"
                       />
-                      <p className="text-[13px] text-gray-400"> {formatTime(course.start_time)} - {formatTime(course.end_time)}</p>
+                      <p className="text-[13px] text-gray-400"> {course.start_time} - {course.end_time}</p>
                     </div>
                     <p className="text-gray-300 text-sm mt-4">{course.description}</p>
                   </CardContent>

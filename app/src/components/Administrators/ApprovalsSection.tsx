@@ -33,6 +33,9 @@ import { approvePendingUser } from "../services/User";
 import { useUserRefresh } from "@/context/UserRefreshContext";
 
 export default function pendingsTab() {
+  
+  const { triggerRefresh } = useUserRefresh();
+
   const [roleFilter, setRoleFilter] = useState<"mahasiswa" | "dosen">("mahasiswa");
   const [majorFilter, setMajorFilter] = useState<string>("Semua");
   const [users, setUsers] = useState<UserPending[]>([]);
@@ -42,8 +45,6 @@ export default function pendingsTab() {
   const [openDelDialog, setOpenDelDialog] = useState(false);
   const [selected, setSelected] = useState<any>(null)
   const [loading, setLoading] = useState(true);
-
-  const { triggerRefresh } = useUserRefresh();
 
   useEffect(() => {
     async function fetchData() {
@@ -101,6 +102,8 @@ export default function pendingsTab() {
       await deletePendingUser(id);
       setUsers((prev) => prev.filter((u) => u.id_pending !== id));
       toast.error(`${name} berhasil ditolak dan dihapus dari daftar pending`);
+
+      triggerRefresh();
     } catch (err: any) {
       toast.error(err.message || "Gagal menghapus user pending");
     }

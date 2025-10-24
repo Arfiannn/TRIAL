@@ -18,7 +18,6 @@ import { getMajor } from "../services/Major";
 import { toast } from "sonner";
 import type { Users } from "@/types/User";
 import { getAllUser } from "../services/User";
-import { formatTime } from "../FormatTime";
 
 export const StudentDashboard: React.FC = () => {
   const storedUser = localStorage.getItem("user");
@@ -135,7 +134,7 @@ export const StudentDashboard: React.FC = () => {
                     <div className="flex gap-2 items-center">
                       <Clock size={15} className="text-gray-400" />
                       <p className="text-[13px] text-gray-400">
-                        {formatTime(course.start_time)} - {formatTime(course.end_time)}
+                        {course.start_time} - {course.end_time}
                       </p>
                     </div>
                   </CardContent>

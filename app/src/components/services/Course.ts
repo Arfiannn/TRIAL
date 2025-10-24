@@ -57,10 +57,30 @@ export async function getCoursesByStudent(): Promise<Course[]> {
   return data.data || [];
 }
 
-export async function getCoursesById(id_course: number): Promise<Course> {
+export async function getCoursesByIdForLecturer(id_course: number): Promise<Course> {
   const token = localStorage.getItem("token");
 
   const res = await fetch(`${COURSE_BASE_URL}/lecturer/courses/${id_course}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) { 
+    const errorText = await res.text();
+    throw new Error(`Gagal mengambil course: ${errorText}`);
+  }
+
+  const data = await res.json();
+  return data.data;
+}
+
+export async function getCoursesByIdForStudent(id_course: number): Promise<Course> {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${COURSE_BASE_URL}/student/courses/${id_course}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

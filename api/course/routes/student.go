@@ -16,6 +16,7 @@ func StudentRoutes(r *gin.RouterGroup) {
 	courses := student.Group("/courses")
 	{
 		courses.GET("", course.GetCoursesByStudent)
+		courses.GET("/:id", course.GetIdCourseStudent)
 	}
 
 	materials := student.Group("/materials")

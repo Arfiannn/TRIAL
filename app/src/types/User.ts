@@ -7,4 +7,5 @@ export interface Users {
   email: string;
   password: string;
   semester: number;
+  created_at: Date;
 }

@@ -31,6 +31,7 @@ import type { UserPending } from "@/types/UserPanding";
 import { deletePendingUser, getAllUserPending } from "../services/UserPending";
 import { getMajor } from "../services/Major";
 import { approvePendingUser } from "../services/User";
+import { useUserRefresh } from "@/context/UserRefreshContext";
 
 export default function pendingsTab() {
   const [roleFilter, setRoleFilter] = useState<"mahasiswa" | "dosen">("mahasiswa");
@@ -42,6 +43,8 @@ export default function pendingsTab() {
   const [openDelDialog, setOpenDelDialog] = useState(false);
   const [selected, setSelected] = useState<any>(null)
   const [loading, setLoading] = useState(true);
+
+  const { triggerRefresh } = useUserRefresh();
 
   useEffect(() => {
     async function fetchData() {
@@ -62,20 +65,16 @@ export default function pendingsTab() {
   }, []);
 
 
-  // ✅ Ambil daftar jurusan dari mockMajor + tambahkan "Semua"
   const availableMajors = ["Semua", ...majors.map((m) => m.name_major)];
 
   const filteredUsersPending = useMemo(() => {
     return users.filter((u) => {
-      // roleId: 3 = mahasiswa, 2 = dosen
       const isMahasiswa = u.roleId === 3;
       const isDosen = u.roleId === 2;
 
-      // 🔹 Filter berdasarkan tab aktif
       if (roleFilter === "mahasiswa" && !isMahasiswa) return false;
       if (roleFilter === "dosen" && !isDosen) return false;
 
-      // 🔹 Jika mahasiswa, bisa difilter berdasarkan jurusan
       if (roleFilter === "mahasiswa" && majorFilter !== "Semua") {
         const majorName = majors.find((m) => m.id_major === u.majorId)?.name_major;
         return majorName === majorFilter;
@@ -85,23 +84,22 @@ export default function pendingsTab() {
     });
   }, [users, roleFilter, majorFilter, majors]);
 
-
-  // ✅ Setujui user (hapus dari list)
   const handleApproveUser = async (id: number, name: string) => {
     try {
-      const newUser = await approvePendingUser(id); // 🚀 memanggil BE dan menerima user baru
-      setUsers((prev) => prev.filter((u) => u.id_pending !== id)); // hapus dari list pending
+      const newUser = await approvePendingUser(id);
+      setUsers((prev) => prev.filter((u) => u.id_pending !== id));
       toast.success(`${name} berhasil disetujui dan ditambahkan ke data pengguna`);
       console.log("✅ User baru:", newUser);
+
+      triggerRefresh();
     } catch (err: any) {
       toast.error(err.message || "Gagal menyetujui user pending");
     }
   };
 
-  // ✅ Tolak user (hapus dari list)
   const handleRejectUser = async (id: number, name: string) => {
     try {
-      await deletePendingUser(id); // ✅ panggil API backend
+      await deletePendingUser(id);
       setUsers((prev) => prev.filter((u) => u.id_pending !== id));
       toast.error(`${name} berhasil ditolak dan dihapus dari daftar pending`);
     } catch (err: any) {
@@ -112,7 +110,6 @@ export default function pendingsTab() {
   return (
     <Tabs defaultValue="mahasiswa" onValueChange={(v) => setRoleFilter(v as any)}>
       <div className="flex justify-between items-center mb-4">
-        {/* TAB SWITCH */}
         <TabsList className="bg-gray-800 border border-gray-700">
           <TabsTrigger
             value="mahasiswa"
@@ -128,7 +125,6 @@ export default function pendingsTab() {
           </TabsTrigger>
         </TabsList>
 
-        {/* FILTER JURUSAN */}
         {roleFilter === "mahasiswa" && (
           <Select value={majorFilter} onValueChange={setMajorFilter}>
             <SelectTrigger className="w-[220px] bg-gray-800 border border-gray-700 text-gray-200">
@@ -149,7 +145,6 @@ export default function pendingsTab() {
         )}
       </div>
 
-      {/* === TAB MAHASISWA === */}
       <TabsContent value="mahasiswa" className="space-y-4">
         <h2 className="text-xl font-semibold text-white flex justify-between items-center">
           Pending Mahasiswa
@@ -183,10 +178,10 @@ export default function pendingsTab() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    {/* <p className="text-sm text-gray-400">
+                    <p className="text-sm text-gray-400">
                       Mendaftar:{" "}
-                      {new Date(pending.createdAt).toLocaleDateString("id-ID")}
-                    </p> */}
+                      {new Date(pending.created_at).toLocaleString("id-ID")}
+                    </p>
                     <div className="flex gap-2">
                       <Button
                         size="sm"
@@ -291,9 +286,9 @@ export default function pendingsTab() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    {/* <p className="text-sm text-gray-400">
-                      Mendaftar: {new Date(pending.createdAt).toLocaleDateString("id-ID")}
-                    </p> */}
+                    <p className="text-sm text-gray-400">
+                      Mendaftar: {new Date(pending.created_at).toLocaleString("id-ID")}
+                    </p>
                     <div className="flex gap-2">
                       <Button
                         size="sm"

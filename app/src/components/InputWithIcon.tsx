@@ -37,10 +37,8 @@ export default function InputWithIcon({
       </Label>
 
       <div className="flex items-center border border-gray-700 rounded-md px-3 bg-gray-900 shadow-sm">
-        {/* Icon kiri */}
         {leftIcon && <div className="text-gray-500 mr-2">{leftIcon}</div>}
 
-        {/* Input */}
         <Input
           type={inputType}
           placeholder={placeholder}
@@ -49,7 +47,6 @@ export default function InputWithIcon({
           className="flex-1 outline-none border-0 .focus:ring-0 focus-visible:ring-0 focus-visible:border-0 text-sm text-white placeholder-gray-400 bg-gray-900"
         />
 
-        {/* Icon kanan (show/hide password) */}
         {isPassword && (
           <button
             type="button"

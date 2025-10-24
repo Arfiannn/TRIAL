@@ -22,7 +22,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, UserCheck } from "lucide-react";
-import { mockMajor } from "@/utils/mockData"; // ✅ tambah mockMajor
 import { toast } from "sonner";
 import DetailDialog from "@/components/DetailDialog";
 import ValidationDialog from "../ValidationDialog";
@@ -34,6 +33,9 @@ import { approvePendingUser } from "../services/User";
 import { useUserRefresh } from "@/context/UserRefreshContext";
 
 export default function pendingsTab() {
+  
+  const { triggerRefresh } = useUserRefresh();
+
   const [roleFilter, setRoleFilter] = useState<"mahasiswa" | "dosen">("mahasiswa");
   const [majorFilter, setMajorFilter] = useState<string>("Semua");
   const [users, setUsers] = useState<UserPending[]>([]);
@@ -43,8 +45,6 @@ export default function pendingsTab() {
   const [openDelDialog, setOpenDelDialog] = useState(false);
   const [selected, setSelected] = useState<any>(null)
   const [loading, setLoading] = useState(true);
-
-  const { triggerRefresh } = useUserRefresh();
 
   useEffect(() => {
     async function fetchData() {
@@ -102,6 +102,8 @@ export default function pendingsTab() {
       await deletePendingUser(id);
       setUsers((prev) => prev.filter((u) => u.id_pending !== id));
       toast.error(`${name} berhasil ditolak dan dihapus dari daftar pending`);
+
+      triggerRefresh();
     } catch (err: any) {
       toast.error(err.message || "Gagal menghapus user pending");
     }
@@ -263,7 +265,7 @@ export default function pendingsTab() {
 
         <div className="grid gap-4">
           {filteredUsersPending.map((pending) => {
-            const majorData = mockMajor.find((m) => m.id === pending.majorId);
+            const majorData = majors.find((m) => m.id_major === pending.majorId);
 
             return (
               <Card
@@ -276,7 +278,7 @@ export default function pendingsTab() {
                     <div>
                       <CardTitle className="text-white">{pending.name}</CardTitle>
                       <CardDescription className="text-gray-400">
-                        {pending.email} • {majorData?.name}
+                        {pending.email} • {majorData?.name_major}
                       </CardDescription>
                     </div>
                     <Badge className="border-blue-600 text-blue-300">

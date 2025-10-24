@@ -15,13 +15,15 @@ import { toast } from 'sonner';
 import type { Users } from '@/types/User';
 import type { Course } from '@/types/Course';
 import { getAllCourses } from '../services/Course';
+import { useUserRefresh } from '@/context/UserRefreshContext';
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { refreshKey } = useUserRefresh();
   const [usersPending, setUsersPending] = useState<UserPending []>([]); 
   const [users, setUsers] = useState<Users []>([]);
   const [courses, setCourses] =  useState<Course []>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect (() => {
     async function fetchData() {
@@ -43,18 +45,15 @@ export const AdminDashboard: React.FC = () => {
       }
     }
     fetchData();
-  }, []);
+  }, [refreshKey]);
 
-  // 🔹 Ambil daftar semester unik dari mahasiswa aktif
   const activeSemestersSet = new Set(
     users
       .filter((s) => s.semester !== undefined && s.semester !== null)
       .map((s) => s.semester)
   );
 
-  // 🔹 Konversi ke array kalau ingin digunakan
   const activeSemesters = Array.from(activeSemestersSet);
-
 
   const stats = {
     totalUsers: users.length,

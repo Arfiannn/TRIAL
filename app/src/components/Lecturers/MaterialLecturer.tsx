@@ -122,7 +122,13 @@ export default function MaterialTab({ courseId }: Props) {
 
         setMaterials((prev) =>
           prev.map((m) =>
-            m.id_material === editing.id_material ? updated : m
+            m.id_material === editing.id_material
+              ? { 
+                  ...m, 
+                  ...updated,
+                  created_at: m.created_at 
+                }
+              : m
           )
         );
 

@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Auth from "./pages/Auth";
 import { AuthProvider } from "./context/AuthContext";
-import { UserRefreshProvider } from "./context/UserRefreshContext"; // ⬅️ Tambahkan ini
+import { UserRefreshProvider } from "./context/UserRefreshContext";
 import Dashboard from "./pages/Dashboard";
 import DashboardLayout from "./components/DashboardLayout";
 import DetailCourseLecturer from "./components/Lecturers/DetailCoursesLecturer";
@@ -21,12 +21,11 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              {/* Auth & Register */}
+
               <Route path="/" element={<Auth />} />
               <Route path="/student/register" element={<Auth />} />
               <Route path="/lecturer/register" element={<Auth />} />
 
-              {/* Dashboard */}
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route
@@ -43,7 +42,6 @@ const App = () => (
                 />
               </Route>
 
-              {/* Default redirect */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </AuthProvider>

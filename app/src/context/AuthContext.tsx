@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
   user: Users | null;
-  setUser: React.Dispatch<React.SetStateAction<Users | null>>; // 🔹 supaya bisa diubah dari luar
+  setUser: React.Dispatch<React.SetStateAction<Users | null>>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -26,7 +26,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 🔹 Load user dari localStorage saat pertama kali
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
@@ -37,7 +36,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(false);
   }, []);
 
-  // 🔹 Logout function
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
@@ -46,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const value = {
     user,
-    setUser, // 🔹 supaya bisa diakses dari luar (misalnya setelah login API)
+    setUser,
     logout,
     isLoading,
   };

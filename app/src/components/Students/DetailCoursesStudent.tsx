@@ -70,11 +70,9 @@ export default function DetailCoursesStudent() {
 
   const lecturer = lecturers.find((l) => l.id_user === courses.lecturerId);
   const major = majors.find((m) => m.id_major === courses.majorId);
-  // const assignments = mockAssignments.filter((a) => a.courseId === Number(id));
 
   return (
     <div className="space-y-6 text-white">
-      {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">{courses.name_course}</h1>
@@ -90,7 +88,6 @@ export default function DetailCoursesStudent() {
         </Button>
       </div>
 
-      {/* TABS */}
       <Tabs defaultValue="all" className="space-y-4">
         <TabsList className="bg-gray-800 border border-gray-700 gap-1 rounded-md p-1">
           <TabsTrigger

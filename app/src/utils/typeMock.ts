@@ -36,7 +36,7 @@ export interface Course {
   lecturerId?: number;
   name: string;
   semester: number;
-  credits: number; //SKS
+  credits: number;
   description?: string;
   day: string;
   startTime: string;

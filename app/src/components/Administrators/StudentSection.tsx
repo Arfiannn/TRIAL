@@ -62,7 +62,6 @@ export default function StudentsTab() {
     fetchData();
   }, [refreshKey]);
 
-  // ✅ Filter mahasiswa berdasarkan majorId dan semester
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
       const studentMajorName = majors.find((m) => m.id_major === s.majorId)?.name_major;
@@ -76,7 +75,6 @@ export default function StudentsTab() {
     });
   }, [students, majorFilter, semesterFilter]);
 
-  // ✅ Fungsi naik semester
   const handleNaikSemester = async (id: number) => {
     const student = students.find((s) => s.id_user === id);
     if (!student) return;
@@ -86,7 +84,6 @@ export default function StudentsTab() {
     try {
       const updated = await updateUserSemester(id, newSemester);
 
-      // Update state
       setStudents((prev) =>
         prev.map((s) => (s.id_user === id ? updated : s))
       );
@@ -100,14 +97,12 @@ export default function StudentsTab() {
 
   return (
     <>
-      {/* Filter Section */}
       <div className="flex flex-row justify-between items-center mb-4 gap-3">
         <Badge variant="secondary" className="bg-gray-600 border-gray-400 text-white h-6">
           Total : {filteredStudents.length} Mahasiswa
         </Badge>
 
         <div className="flex flex-row gap-3">
-          {/* Filter Major */}
           <Select
             value={majorFilter}
             onValueChange={(val) => {
@@ -131,7 +126,6 @@ export default function StudentsTab() {
             </SelectContent>
           </Select>
 
-          {/* Filter Semester */}
           <Select value={semesterFilter} onValueChange={setSemesterFilter}>
             <SelectTrigger className="w-[220px] bg-gray-800 border border-gray-700 text-gray-200">
               <SelectValue placeholder="Pilih Semester" />
@@ -151,7 +145,6 @@ export default function StudentsTab() {
         </div>
       </div>
 
-      {/* Daftar Mahasiswa */}
       {filteredStudents.map((student) => {
         const majorData = majors.find((m) => m.id_major === student.majorId);
 
@@ -216,7 +209,6 @@ export default function StudentsTab() {
         valName="Naik"
       />
 
-      {/* Jika kosong */}
       {!loading && filteredStudents.length === 0 && (
         <Card className="bg-gray-800/50 border-gray-700">
           <CardContent className="pt-6 text-center">

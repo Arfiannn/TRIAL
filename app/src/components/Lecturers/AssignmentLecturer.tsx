@@ -312,7 +312,6 @@ export default function AssignmentTab({ courseId }: Props) {
       
       />
 
-      {/* === DIALOG === */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="bg-gray-900 border-gray-700">
           <DialogHeader>
@@ -347,7 +346,6 @@ export default function AssignmentTab({ courseId }: Props) {
             />
 
             <div className="flex flex-row gap-4">
-              {/* === PILIH TANGGAL === */}
               <div className="col-span-2 flex gap-2 items-end">
                 <div className="flex-1">
                   <Label className="text-gray-200">Tanggal Deadline</Label>
@@ -358,7 +356,7 @@ export default function AssignmentTab({ courseId }: Props) {
                       const selectedDate = e.target.value;
                       setTempDate(selectedDate);
                       setFormData({ ...formData, deadlineDate: selectedDate });
-                      setIsTimePickerOpen(true); // buka popup jam
+                      setIsTimePickerOpen(true); 
                     }}
                     className="bg-gray-800 border-gray-700 text-white cursor-pointer"
                   />
@@ -375,7 +373,6 @@ export default function AssignmentTab({ courseId }: Props) {
                 )}
               </div>
 
-              {/* === NILAI MAKSIMAL === */}
               <div className="w-full">
                 <Label className="text-gray-200">Upload File</Label>
                 <Input
@@ -393,7 +390,6 @@ export default function AssignmentTab({ courseId }: Props) {
                 </Button>
               </div>
 
-              {/* === POPUP JAM ANALOG === */}
               {isTimePickerOpen && (
                 <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[9999]">
                   <div className="bg-gray-900 border border-gray-700 rounded-xl p-4 shadow-lg">
@@ -408,7 +404,7 @@ export default function AssignmentTab({ courseId }: Props) {
                         const selectedTime = data.formatted24;
                         setFormData((prev) => ({
                           ...prev,
-                          deadlineTime: selectedTime, // simpan langsung jam (string "HH:mm")
+                          deadlineTime: selectedTime,
                         }));
                       }}
                       doneButton={() => (
@@ -425,7 +421,6 @@ export default function AssignmentTab({ courseId }: Props) {
               )}
             </div>
 
-            {/* Menampilkan file lama atau baru */}
             {(file || file_url) && (
               <div>
                 <Button

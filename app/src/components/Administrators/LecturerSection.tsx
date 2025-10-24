@@ -36,7 +36,6 @@ export default function LecturersTab() {
   const [selectedLecturer, setSelectedLecturer] = useState<Users | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Ambil daftar fakultas dari mockFaculty
   const availableFaculties = ["Semua", ...faculties.map((f) => f.name_faculty)];
 
   useEffect(() => {
@@ -63,22 +62,18 @@ export default function LecturersTab() {
     fetchData();
   }, [refreshKey]);
 
-  // ✅ Filter berdasarkan fakultas
   const filteredLecturer = lecturer.filter((lecturer) => {
     if (facultyFilter === "Semua") return true;
 
-    // cari jurusan dosen
     const major = majors.find((m) => m.id_major === lecturer.majorId);
     if (!major) return false;
 
-    // cari fakultas jurusan tersebut
     const faculty = faculties.find((f) => f.id_faculty === major.facultyId);
     return faculty?.name_faculty === facultyFilter;
   });
 
   return (
     <>
-      {/* Filter Fakultas */}
       <div className="flex justify-between items-center mb-4">
         <Badge
           variant="secondary"
@@ -105,9 +100,7 @@ export default function LecturersTab() {
         </Select>
       </div>
 
-      {/* Daftar Dosen */}
       {filteredLecturer.map((lecturer) => {
-        // cari jurusan dosen berdasarkan majorId
         const major = majors.find((m) => m.id_major === lecturer.majorId);
 
         return (
@@ -142,7 +135,6 @@ export default function LecturersTab() {
         );
       })}
 
-      {/* Jika kosong */}
       {!loading && filteredLecturer.length === 0 && (
         <Card className="bg-gray-800/50 border-gray-700">
           <CardContent className="pt-6 text-center">
@@ -152,7 +144,6 @@ export default function LecturersTab() {
         </Card>
       )}
 
-      {/* Dialog Detail */}
       <DetailDialog
         open={!!selectedLecturer}
         onClose={() => setSelectedLecturer(null)}

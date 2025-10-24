@@ -10,7 +10,6 @@ import type { Major } from '@/types/Major';
 import { getCoursesByLecturer } from '../services/Course';
 import { getMajor } from '../services/Major';
 import { toast } from 'sonner';
-import { formatTime } from '../FormatTime';
 
 export const LecturerDashboard: React.FC = () => {
   const storedUser = localStorage.getItem("user");
@@ -45,18 +44,16 @@ export const LecturerDashboard: React.FC = () => {
  const teachingCourses = useMemo(() => {
     if (!user) return [];
     return courses.filter((course) => course.lecturerId === user.id_user);
-  }, [user, courses]); // ✅ tambahkan courses
+  }, [user, courses]);
 
-  // 🔹 Ambil semester unik dari daftar course dosen ini
   const availableSemesters = useMemo(() => {
     const uniqueSemesters = Array.from(
       new Set(teachingCourses.map((c) => c.semester))
-    ).sort((a, b) => a - b); // urut dari kecil ke besar
+    ).sort((a, b) => a - b);
 
     return ["Semua", ...uniqueSemesters.map((s) => s.toString())];
   }, [teachingCourses]);
 
-  // 🔹 Filter course berdasarkan semester yang dipilih
   const filteredCourses = useMemo(() => {
     if (semesterFilter === "Semua") return teachingCourses;
     return teachingCourses.filter(
@@ -149,7 +146,7 @@ export const LecturerDashboard: React.FC = () => {
                         size={15}
                         className="text-gray-400"
                       />
-                      <p className="text-[13px] text-gray-400"> {formatTime(course.start_time)} - {formatTime(course.end_time)}</p>
+                      <p className="text-[13px] text-gray-400"> {course.start_time} - {course.end_time}</p>
                     </div>
                     <p className="text-gray-300 text-sm mt-4">{course.description}</p>
                   </CardContent>

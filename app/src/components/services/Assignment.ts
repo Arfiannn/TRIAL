@@ -8,7 +8,7 @@ export async function getAllAssignments(): Promise<Assignment[]> {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`, // kalau endpoint dilindungi JWT
+      Authorization: `Bearer ${token}`,
     },
   });
 
@@ -38,7 +38,7 @@ export async function getAssignmentById(id: number): Promise<Assignment> {
   }
 
   const data = await res.json();
-  return data; // backend langsung kirim objek assignment, bukan { data: {...} }
+  return data;
 }
 
 export async function createAssignment(input: AssignmentInput): Promise<Assignment> {

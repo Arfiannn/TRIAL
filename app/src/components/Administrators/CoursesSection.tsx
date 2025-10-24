@@ -20,7 +20,7 @@ export default function CoursesTab() {
   const [lecturers, setLecturers] = useState<Users[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -118,7 +118,6 @@ export default function CoursesTab() {
 
                   <CardDescription className="text-gray-400">
                     <div className="flex gap-2 items-center py-2">
-                      {/* ✅ tampilkan nama jurusan dari mockMajor */}
                       <p className="text-[13px]">
                         {major?.name_major || "Jurusan tidak ditemukan"}
                       </p>

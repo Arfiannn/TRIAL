@@ -20,14 +20,15 @@ import { getCoursesByIdForLecturer } from "../services/Course";
 
 interface StudentSubmission {
   id_user: number;
-  id_submission?: number | null; 
   name: string;
   email: string;
   major: string;
+  id_submission?: number | null; 
+  file_name?: string | null;
   hasSubmitted: boolean;
   isLate: boolean;
   submitted_at?: string;
-  fileUrl?: string | null;
+  file_url?: string | null;
   text?: string;
 }
 
@@ -83,9 +84,10 @@ export default function SubmissionStudentPage() {
 
           return {
             id_user: stu.id_user,
-            id_submission: submission?.id_submission ?? null, // 🟢 ambil dari BE
+            id_submission: submission?.id_submission ?? null,
             name: stu.name,
             email: stu.email,
+            file_name: submission?.file_name || null,
             major:
               majors.find((m) => m.id_major === stu.majorId)?.name_major || "Unknown",
             hasSubmitted: !!submission,
@@ -93,7 +95,7 @@ export default function SubmissionStudentPage() {
             submitted_at: submission?.submitted_at
               ? new Date(submission.submitted_at).toISOString()
               : undefined,
-            fileUrl: submission?.file_url,
+            file_url: submission?.file_url,
             text: submission?.description || "",
           };
         });
@@ -244,13 +246,13 @@ export default function SubmissionStudentPage() {
                       </div>
                     )}
 
-                    {s.fileUrl && s.id_submission && (
+                    {s.file_url && s.id_submission && (
                       <Button
                         size="sm"
                         className="bg-gray-700 border border-gray-600 text-white flex gap-1"
                         onClick={() => handleViewFile(s.id_submission!)}
                       >
-                        <Eye size={14} /> Lihat File
+                        <Eye size={14} /> {s.file_name || "Lihat File Submission"}
                       </Button>
                     )}
                   </div>

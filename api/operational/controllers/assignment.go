@@ -6,6 +6,7 @@ import (
 	"operational_service/config"
 	"operational_service/models"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -34,26 +35,39 @@ func CreateAssignment(c *gin.Context) {
 
 	title := c.PostForm("title")
 	description := c.PostForm("description")
-	deadlineStr := c.PostForm("deadline")
+	deadlineStr := strings.TrimSpace(c.PostForm("deadline"))
 
+	if title == "" || description == "" || deadlineStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Semua field wajib diisi"})
+		return
+	}
+
+	loc, err := time.LoadLocation("Asia/Makassar")
+	if err != nil {
+		loc = time.UTC
+	}
+
+	if len(deadlineStr) == len("2006-01-02") {
+		deadlineStr += " 23:59:00"
+	}
+
+	deadline, err := time.ParseInLocation("2006-01-02 15:04:05", deadlineStr, loc)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Format deadline salah. Gunakan YYYY-MM-DD atau YYYY-MM-DD HH:mm:ss"})
+		return
+	}
+
+	// ✅ Handle file upload
 	file, err := c.FormFile("file_url")
 	var fileBytes []byte
 	var fileType string
-
-	if err == nil {
+	if err == nil && file != nil {
 		openedFile, err := file.Open()
 		if err == nil {
 			defer openedFile.Close()
 			fileBytes, _ = io.ReadAll(openedFile)
 			fileType = file.Header.Get("Content-Type")
 		}
-	}
-
-	loc, _ := time.LoadLocation("Asia/Makassar")
-	deadline, err := time.ParseInLocation("2006-01-02 15:04:05", deadlineStr, loc)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Format deadline salah"})
-		return
 	}
 
 	assignment := models.Assignment{
@@ -98,22 +112,21 @@ func GetAssignmentByID(c *gin.Context) {
 }
 
 func UpdateAssignment(c *gin.Context) {
-
 	if c.GetUint("role_id") != 2 {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Only lecturer can update assignments"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Hanya dosen yang bisa mengedit tugas"})
 		return
 	}
 
 	id := c.Param("id")
 	var assignment models.Assignment
 	if err := config.DB.First(&assignment, "id_assignment = ?", id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Assignment not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Assignment tidak ditemukan"})
 		return
 	}
 
-	title := c.PostForm("title")
-	description := c.PostForm("description")
-	deadlineStr := c.PostForm("deadline")
+	title := strings.TrimSpace(c.PostForm("title"))
+	description := strings.TrimSpace(c.PostForm("description"))
+	deadlineStr := strings.TrimSpace(c.PostForm("deadline"))
 
 	if title != "" {
 		assignment.Title = title
@@ -122,14 +135,23 @@ func UpdateAssignment(c *gin.Context) {
 		assignment.Description = description
 	}
 	if deadlineStr != "" {
-		loc, _ := time.LoadLocation("Asia/Makassar")
+		loc, err := time.LoadLocation("Asia/Makassar")
+		if err != nil {
+			loc = time.UTC
+		}
+		if len(deadlineStr) == len("2006-01-02") {
+			deadlineStr += " 23:59:00"
+		}
 		if d, err := time.ParseInLocation("2006-01-02 15:04:05", deadlineStr, loc); err == nil {
 			assignment.Deadline = d
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Format deadline salah"})
+			return
 		}
 	}
 
 	file, err := c.FormFile("file_url")
-	if err == nil {
+	if err == nil && file != nil {
 		f, err := file.Open()
 		if err == nil {
 			defer f.Close()
@@ -140,7 +162,7 @@ func UpdateAssignment(c *gin.Context) {
 	}
 
 	if err := config.DB.Save(&assignment).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update assignment"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui assignment"})
 		return
 	}
 

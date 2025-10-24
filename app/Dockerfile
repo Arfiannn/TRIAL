@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 8004
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "8004"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "8004"]

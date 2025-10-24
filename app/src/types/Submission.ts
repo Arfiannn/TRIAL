@@ -4,6 +4,7 @@ export interface Submission {
   assignmentId: number;
   description?: string;
   status?: string;
+  file_name?: string;
   file?: File | null;
   file_url?: string | null;
   file_type?: string | null;

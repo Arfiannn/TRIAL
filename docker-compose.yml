@@ -34,7 +34,7 @@ services:
       - .env
     environment:
       DB_HOST: db
-      JWT_SECRET: ${JWT_SECRET_AUTH}
+      JWT_SECRET: ${JWT_SECRET}
     command: sh -c "sleep 20 && ./main"
 
   course:
@@ -50,7 +50,7 @@ services:
       - .env
     environment:
       DB_HOST: db
-      JWT_SECRET: ${JWT_SECRET_COURSE}
+      JWT_SECRET: ${JWT_SECRET}
     command: sh -c "sleep 20 && ./course-service"
 
   operational:
@@ -66,7 +66,7 @@ services:
       - .env
     environment:
       DB_HOST: db
-      JWT_SECRET: ${JWT_SECRET_OPERATIONAL}
+      JWT_SECRET: ${JWT_SECRET}
     command: sh -c "sleep 20 && ./main"
 
   frontend:

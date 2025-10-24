@@ -84,7 +84,6 @@ export const StudentDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* TABS */}
       <Tabs defaultValue="courses" className="space-y-4">
         <TabsList className="bg-gray-800 border-gray-700">
           <TabsTrigger

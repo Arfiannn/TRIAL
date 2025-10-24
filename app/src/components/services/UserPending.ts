@@ -20,7 +20,6 @@ export async function getAllUserPending(): Promise<UserPending[]> {
   return data.pending_users || [];
 }
 
-// 🧩 Delete pending user berdasarkan ID
 export async function deletePendingUser(id: number): Promise<void> {
   const token = localStorage.getItem("token");
 

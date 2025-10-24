@@ -58,8 +58,6 @@ export default function DetailCourseLecturer() {
     return <p className="text-gray-400 text-center mt-10">Memuat data...</p>;
   }
 
-
-
   const major = majors.find((m) => m.id_major === course?.majorId);
 
   if (!course) {

@@ -91,11 +91,9 @@ export default function AddCourseDialog({
   const filteredLecturer = lecturer.filter((lecturer) => {
     if (facultyFilter === "Semua") return true;
 
-    // cari jurusan dosen
     const major = majors.find((m) => m.id_major === lecturer.majorId);
     if (!major) return false;
 
-    // cari fakultas jurusan tersebut
     const faculty = faculties.find((f) => f.id_faculty === major.facultyId);
     return faculty?.name_faculty === facultyFilter;
   });
@@ -155,21 +153,19 @@ export default function AddCourseDialog({
       description,
       sks: parseInt(selectedCredits),
       day: selectedDay,
-      start_time: startTime, // ✅ format ISO lengkap
+      start_time: startTime,
       end_time: endTime
     };
 
     try {
       if (isEdit && editData?.id_course) {
-        // ✳️ MODE EDIT
         const updated = await updateCourse(editData.id_course, payload);
         toast.success(`Mata kuliah "${updated.name_course}" berhasil diperbarui!`);
-        onSave(updated); // update di parent
+        onSave(updated);
       } else {
-        // ➕ MODE CREATE
         const created = await createCourse(payload);
         toast.success(`Mata kuliah "${created.name_course}" berhasil ditambahkan!`);
-        onSave(created); // tambahkan ke parent list
+        onSave(created);
       }
 
       resetForm();
@@ -206,7 +202,6 @@ export default function AddCourseDialog({
           </DialogTitle>
         </DialogHeader>
 
-        {/* === PILIH DOSEN === */}
         <div className="space-y-2">
           <Label className="text-gray-300">Pilih Dosen</Label>
           <Select value={selectedLecturer} onValueChange={setSelectedLecturer}>
@@ -259,9 +254,7 @@ export default function AddCourseDialog({
           </Select>
         </div>
 
-        {/* === FORM FIELD === */}
         <div className="space-y-4 mt-4">
-          {/* Nama & Major */}
           <div className="flex flex-row gap-3">
             <div className="space-y-2 w-full">
               <Label className="text-gray-300">Nama Mata Kuliah</Label>
@@ -289,7 +282,6 @@ export default function AddCourseDialog({
             </div>
           </div>
 
-          {/* SKS & Semester */}
           <div className="flex flex-row gap-3">
             <div className="space-y-2 w-full">
               <Label className="text-gray-300">Jumlah SKS</Label>
@@ -324,7 +316,6 @@ export default function AddCourseDialog({
             </div>
           </div>
 
-          {/* Hari & Jam */}
           <div className="flex flex-row gap-3">
             <div className="space-y-2 w-full">
               <Label className="text-gray-300">Hari</Label>
@@ -345,7 +336,6 @@ export default function AddCourseDialog({
             <div className="space-y-2 w-full">
               <Label className="text-gray-300">Jam</Label>
               <div className="flex gap-3 items-center">
-                {/* Jam Mulai */}
                 <div className="w-full">
                   <Button
                     variant="outline"
@@ -358,7 +348,6 @@ export default function AddCourseDialog({
 
                 <span className="text-gray-400 mt-2">–</span>
 
-                {/* Jam Selesai */}
                 <div className="w-full">
                   <Button
                     variant="outline"
@@ -370,7 +359,6 @@ export default function AddCourseDialog({
                 </div>
               </div>
 
-              {/* Modal TimeKeeper */}
               {isTimePickerOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
                   <div className="bg-gray-900 border border-gray-700 rounded-xl p-4 shadow-lg">
@@ -411,7 +399,6 @@ export default function AddCourseDialog({
             </div>
           </div>
 
-          {/* Deskripsi */}
           <div className="space-y-2">
             <Label className="text-gray-300">Deskripsi Mata Kuliah</Label>
             <Textarea

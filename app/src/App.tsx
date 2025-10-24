@@ -21,12 +21,11 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              {/* Auth & Register */}
+
               <Route path="/" element={<Auth />} />
               <Route path="/student/register" element={<Auth />} />
               <Route path="/lecturer/register" element={<Auth />} />
 
-              {/* Dashboard */}
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route
@@ -43,7 +42,6 @@ const App = () => (
                 />
               </Route>
 
-              {/* Default redirect */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </AuthProvider>

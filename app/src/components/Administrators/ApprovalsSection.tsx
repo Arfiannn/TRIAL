@@ -22,7 +22,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, UserCheck } from "lucide-react";
-import { mockMajor } from "@/utils/mockData"; // ✅ tambah mockMajor
 import { toast } from "sonner";
 import DetailDialog from "@/components/DetailDialog";
 import ValidationDialog from "../ValidationDialog";
@@ -263,7 +262,7 @@ export default function pendingsTab() {
 
         <div className="grid gap-4">
           {filteredUsersPending.map((pending) => {
-            const majorData = mockMajor.find((m) => m.id === pending.majorId);
+            const majorData = majors.find((m) => m.id_major === pending.majorId);
 
             return (
               <Card
@@ -276,7 +275,7 @@ export default function pendingsTab() {
                     <div>
                       <CardTitle className="text-white">{pending.name}</CardTitle>
                       <CardDescription className="text-gray-400">
-                        {pending.email} • {majorData?.name}
+                        {pending.email} • {majorData?.name_major}
                       </CardDescription>
                     </div>
                     <Badge className="border-blue-600 text-blue-300">

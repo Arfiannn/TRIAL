@@ -45,18 +45,16 @@ export const LecturerDashboard: React.FC = () => {
  const teachingCourses = useMemo(() => {
     if (!user) return [];
     return courses.filter((course) => course.lecturerId === user.id_user);
-  }, [user, courses]); // ✅ tambahkan courses
+  }, [user, courses]);
 
-  // 🔹 Ambil semester unik dari daftar course dosen ini
   const availableSemesters = useMemo(() => {
     const uniqueSemesters = Array.from(
       new Set(teachingCourses.map((c) => c.semester))
-    ).sort((a, b) => a - b); // urut dari kecil ke besar
+    ).sort((a, b) => a - b);
 
     return ["Semua", ...uniqueSemesters.map((s) => s.toString())];
   }, [teachingCourses]);
 
-  // 🔹 Filter course berdasarkan semester yang dipilih
   const filteredCourses = useMemo(() => {
     if (semesterFilter === "Semua") return teachingCourses;
     return teachingCourses.filter(

@@ -6,7 +6,6 @@ export default function Auth() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Deteksi path aktif
   const isLogin = location.pathname === "/";
 
   return (

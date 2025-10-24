@@ -19,6 +19,6 @@ export interface CourseInput {
   description: string;
   sks: number;
   day: string;
-  start_time: string; // format "HH:mm"
-  end_time: string;   // format "HH:mm"
+  start_time: string;
+  end_time: string;   
 }

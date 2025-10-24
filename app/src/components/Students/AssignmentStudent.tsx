@@ -224,7 +224,6 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                     </p>
                   </div>
 
-                  {/* 🔹 Nama file langsung dari BE */}
                   {submission.file_name && (
                     <Button
                       className="flex items-center justify-between border border-gray-600 rounded-md p-3 bg-gray-900/10"
@@ -237,7 +236,6 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
                     </Button>
                   )}
 
-                  {/* 🔹 Deskripsi langsung dari BE */}
                   {submission.description && (
                     <div className="border border-gray-600 bg-gray-900/10 rounded-md p-3">
                       <div className="flex w-full justify-center gap-2 mb-1">

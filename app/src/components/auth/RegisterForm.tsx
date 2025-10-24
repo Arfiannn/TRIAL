@@ -96,6 +96,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         password,
         facultyId: Number(selectedFaculty),
         majorId: Number(selectedMajor),
+        created_at : new Date(),
       };
 
       if (location.pathname.includes("/student/register")) {

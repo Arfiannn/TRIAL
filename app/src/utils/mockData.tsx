@@ -1,4 +1,4 @@
-import type { Assignment, Course, Faculty,  Major, Material, Role, Submission, User, UserApproved,  } from "@/types";
+import type { Assignment, Course, Faculty,  Major, Material, Role, Submission, User, UserApproved,  } from "@/utils/typeMock";
 
 export const mockFaculty: Faculty[] = [
   {

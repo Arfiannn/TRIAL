@@ -47,7 +47,7 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
           getCoursesByStudent(),
         ]);
 
-        setSubmissions(submissionsData);
+        setSubmissions(submissionsData || []);
         setCourses(coursesData);
       } catch (err: any) {
         console.error(err);
@@ -138,7 +138,7 @@ export default function AssignmentList({ assignments }: AssignmentListProps) {
   return (
     <div className="grid gap-4">
       {assignments.map((assignment) => {
-        const submission = submissions.find(
+        const submission = submissions?.find(
           (s) => s.assignmentId === assignment.id_assignment
         );
 

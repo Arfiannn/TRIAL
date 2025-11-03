@@ -18,7 +18,6 @@ export default function DashboardLayout() {
 
   return (
     <div className="min-h-screen bg-[#0A0F1E]">
-      {/* Header */}
       <header className="bg-gray-900/50 border-b border-gray-800 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">

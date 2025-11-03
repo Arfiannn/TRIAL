@@ -258,7 +258,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         </form>
 
         <div className="flex justify-center text-blue-400">
-          <p>
+          <p className="text-white">
             Sudah punya akun?{" "}
             <button
               onClick={onSwitchToLogin}

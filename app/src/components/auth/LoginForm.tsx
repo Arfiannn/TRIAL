@@ -88,7 +88,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         </form>
         
         <div className="flex flex-row item-center justify-center text-blue-400">
-            <p>Belum punya akun? {" "}</p>
+            <p className="text-white">Belum punya akun? {" "}</p>
             <a
               onClick={onSwitchToRegister}
               className="text-blue-400 hover:text-blue-600 hover:underline pl-1"

@@ -150,6 +150,8 @@ export default function LecturersTab() {
         data={selectedLecturer}
         title="Detail Dosen"
         description="Informasi lengkap dosen terdaftar."
+        majors={majors}
+        faculties={faculties}
       />
     </>
   );

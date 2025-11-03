@@ -371,8 +371,8 @@ export default function AddCourseDialog({
                     <TimeKeeper
                       time={
                         isTimePickerOpen === "start_time"
-                          ? startTime || "08:00"
-                          : endTime || "10:00"
+                          ? startTime || "00:00"
+                          : endTime || "00:00"
                       }
                       hour24Mode
                       switchToMinuteOnHourSelect

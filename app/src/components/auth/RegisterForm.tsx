@@ -76,16 +76,19 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
     if (password !== confirmPassword) {
       setError("Password tidak cocok");
+      setIsLoading(false);
       return;
     }
 
     if (password.length < 6) {
       setError("Password minimal 6 karakter");
+      setIsLoading(false);
       return;
     }
 
     if (!selectedFaculty || !selectedMajor) {
       setError("Pilih fakultas dan program studi terlebih dahulu");
+      setIsLoading(false);
       return;
     }
 
@@ -96,7 +99,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         password,
         facultyId: Number(selectedFaculty),
         majorId: Number(selectedMajor),
-        created_at : new Date(),
+        created_at: new Date(),
       };
 
       if (location.pathname.includes("/student/register")) {
@@ -109,6 +112,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     } catch (err) {
       console.error("Gagal mendaftar:", err);
       setError("Terjadi kesalahan saat mendaftar. Silakan coba lagi.");
+    } finally {
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 2000);
     }
   };
 

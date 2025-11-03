@@ -397,7 +397,7 @@ export default function AssignmentTab({ courseId }: Props) {
                       Pilih Jam Deadline
                     </h3>
                     <TimeKeeper
-                      time={formData.deadlineTime || "12:00"}
+                      time={formData.deadlineTime || "00:00"}
                       hour24Mode
                       switchToMinuteOnHourSelect
                       onChange={(data) => {

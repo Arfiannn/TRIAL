@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -15,6 +14,8 @@ interface DetailDialogProps {
   data?: any;
   title?: string;
   description?: string;
+  majors?: any[];
+  faculties?: any[];
 }
 
 export default function DetailDialog({
@@ -23,50 +24,74 @@ export default function DetailDialog({
   data,
   title = "Detail Pengguna",
   description = "Informasi lengkap data pengguna.",
+  majors,
+  faculties,
 }: DetailDialogProps) {
+  const roleName =
+    data?.roleId === 3
+      ? "Mahasiswa"
+      : data?.roleId === 2
+      ? "Dosen"
+      : data
+      ? "Lainnya"
+      : "-";
+
+  const majorName = data
+    ? majors?.find((m) => m.id_major === data.majorId)?.name_major
+    : "-";
+  const facultyName = data
+    ? faculties?.find((f) => f.id_faculty === data.facultyId)?.name_faculty
+    : "-";
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-gray-900 border border-gray-700 text-gray-200 max-w-md">
         <DialogHeader>
           <DialogTitle className="text-white text-xl">{title}</DialogTitle>
-          <DialogDescription className="text-gray-400">{description}</DialogDescription>
+          <DialogDescription className="text-gray-400">
+            {description}
+          </DialogDescription>
         </DialogHeader>
 
         {data ? (
           <div className="space-y-3 mt-4">
             <p>
-              <span className="font-semibold text-gray-300">Nama:</span> {data.name}
+              <span className="font-semibold text-gray-300">Nama:</span>{" "}
+              {data.name}
             </p>
             <p>
-              <span className="font-semibold text-gray-300">Email:</span> {data.email}
+              <span className="font-semibold text-gray-300">Email:</span>{" "}
+              {data.email}
             </p>
-            {data.role && (
+            <p>
+              <span className="font-semibold text-gray-300">Role:</span>{" "}
+              {roleName}
+            </p>
+            <p>
+              <span className="font-semibold text-gray-300">Program Studi:</span>{" "}
+              {majorName || "-"}
+            </p>
+            <p>
+              <span className="font-semibold text-gray-300">Fakultas:</span>{" "}
+              {facultyName || "-"}
+            </p>
+            {data.semester !== undefined && data.semester !== 0 && (
               <p>
-                <span className="font-semibold text-gray-300">Role:</span> {data.role}
-              </p>
-            )}
-            {data.major && (
-              <p>
-                <span className="font-semibold text-gray-300">Program Studi:</span> {data.major}
-              </p>
-            )}
-            {data.faculty != null && (
-              <p>
-                <span className="font-semibold text-gray-300">Fakultas:</span> {data.faculty}
-              </p>
-            )}
-            {data.semester === 0 && (
-              <p>
-                <span className="font-semibold text-gray-300">Semester:</span> {data.semester}
+                <span className="font-semibold text-gray-300">Semester:</span>{" "}
+                {data.semester}
               </p>
             )}
             <p>
-              <span className="font-semibold text-gray-300">Tanggal Daftar:</span>{" "}
+              <span className="font-semibold text-gray-300">
+                Tanggal Daftar:
+              </span>{" "}
               {new Date(data.created_at).toLocaleDateString("id-ID")}
             </p>
           </div>
         ) : (
-          <p className="text-gray-400 text-sm mt-4">Tidak ada data tersedia.</p>
+          <p className="text-gray-400 text-sm mt-4">
+            Tidak ada data tersedia.
+          </p>
         )}
 
         <DialogFooter className="mt-6">

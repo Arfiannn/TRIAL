@@ -12,6 +12,9 @@ import { getCoursesByIdForLecturer } from "../services/Course";
 import { getAllUser } from "../services/User";
 import type { Major } from "@/types/Major";
 import { getMajor } from "../services/Major";
+import DetailDialog from "../DetailDialog";
+import type { Faculty } from "@/types/Faculty";
+import { getFaculty } from "../services/Faculty";
 
 export default function DetailCourseLecturer() {
   const { id } = useParams();
@@ -20,6 +23,8 @@ export default function DetailCourseLecturer() {
   const [course, setCourse] = useState<Course | null>(null);
   const [students, setStudents] = useState<Users[]>([]);
   const [majors, setMajors] = useState<Major[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([])
+  const [selected, setSelected] = useState<any>(null)
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -28,10 +33,11 @@ export default function DetailCourseLecturer() {
         setLoading(true);
         if (!id) return;
 
-        const [courseData, studentData, majorsData] = await Promise.all([
+        const [courseData, studentData, majorsData, facultiesData] = await Promise.all([
           getCoursesByIdForLecturer(Number(id)),
           getAllUser(),
           getMajor(),
+          getFaculty(),
         ]);
 
         const mahasiswa = studentData.filter(
@@ -43,7 +49,8 @@ export default function DetailCourseLecturer() {
 
         setCourse(courseData);
         setStudents(mahasiswa);
-        setMajors(majorsData)
+        setMajors(majorsData);
+        setFaculties(facultiesData);
       } catch (err: any) {
         console.error(err);
         toast.error("Gagal memuat data mata kuliah atau mahasiswa");
@@ -131,6 +138,7 @@ export default function DetailCourseLecturer() {
                 <Card
                   key={student.id_user}
                   className="bg-gray-800/50 border-gray-700 rounded-lg"
+                  onClick={() => setSelected(student)}
                 >
                   <CardContent className="flex justify-between items-center p-4">
                     <div>
@@ -147,6 +155,16 @@ export default function DetailCourseLecturer() {
               ))}
             </div>
           )}
+
+          <DetailDialog
+            open={selected}
+            onClose={() => setSelected(null)}
+            data={selected}
+            title="Detail Mahasiswa"
+            description="Informasi lengkap mahasiswa terdaftar."
+            majors={majors}
+            faculties={faculties}
+          />
         </TabsContent>
       </Tabs>
     </div>

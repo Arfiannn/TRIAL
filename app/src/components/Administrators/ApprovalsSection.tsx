@@ -31,6 +31,8 @@ import { deletePendingUser, getAllUserPending } from "../services/UserPending";
 import { getMajor } from "../services/Major";
 import { approvePendingUser } from "../services/User";
 import { useUserRefresh } from "@/context/UserRefreshContext";
+import type { Faculty } from "@/types/Faculty";
+import { getFaculty } from "../services/Faculty";
 
 export default function pendingsTab() {
   
@@ -40,6 +42,7 @@ export default function pendingsTab() {
   const [majorFilter, setMajorFilter] = useState<string>("Semua");
   const [users, setUsers] = useState<UserPending[]>([]);
   const [majors, setMajors] = useState<Major[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserPending | null>(null);
   const [openApvDialog, setOpenApvDialog] = useState(false);
   const [openDelDialog, setOpenDelDialog] = useState(false);
@@ -49,12 +52,14 @@ export default function pendingsTab() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [userData, majorData] = await Promise.all([
+        const [userData, majorData, facultyData] = await Promise.all([
           getAllUserPending(),
           getMajor(),
+          getFaculty()
         ]);
         setUsers(userData);
         setMajors(majorData);
+        setFaculties(facultyData);
       } catch (err: any) {
         toast.error(err.message || "Gagal memuat data");
       } finally {
@@ -251,10 +256,11 @@ export default function pendingsTab() {
           data={selected}
           title="Detail Calon Mahasiswa"
           description="Informasi lengkap calon mahasiswa"
+          majors={majors}
+          faculties={faculties}
         />
       </TabsContent>
 
-      {/* === TAB DOSEN === */}
       <TabsContent value="dosen" className="space-y-4">
         <h2 className="text-xl font-semibold text-white flex justify-between items-center">
           Pending Dosen
@@ -357,6 +363,8 @@ export default function pendingsTab() {
             data={selected}
             title="Detail Calon Dosen"
             description="Informasi lengkap calon dosen"
+            majors={majors}
+            faculties={faculties}
           />
         </div>
       </TabsContent>

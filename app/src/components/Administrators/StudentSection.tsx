@@ -24,6 +24,8 @@ import type { Major } from "@/types/Major";
 import { getAllUser, updateUserSemester } from "../services/User";
 import { getMajor } from "../services/Major";
 import { useUserRefresh } from "@/context/UserRefreshContext";
+import type { Faculty } from "@/types/Faculty";
+import { getFaculty } from "../services/Faculty";
 
 export default function StudentsTab() {
 
@@ -33,6 +35,7 @@ export default function StudentsTab() {
   const [semesterFilter, setSemesterFilter] = useState<string>("Semua");
   const [students, setStudents] = useState<Users[]>([]);
   const [majors, setMajors] = useState<Major[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([])
   const [selectedStudent, setSelectedStudent] = useState<Users | null>(null);
   const [selectedStuSem, setSelectedStuSem] = useState<Users | null>(null);
   const [openSemesterDialog, setOpenSemesterDialog] = useState(false);
@@ -45,13 +48,15 @@ export default function StudentsTab() {
     async function fetchData() {
       setLoading(true);
       try {
-        const [users, majors] = await Promise.all([
+        const [users, majors, faculties] = await Promise.all([
           getAllUser(),
-          getMajor()
+          getMajor(),
+          getFaculty(),
         ])
         const mahasiswa = users.filter((u) => u.roleId === 3);
         setStudents(mahasiswa);
         setMajors(majors)
+        setFaculties(faculties)
       } catch (err) {
         console.error(err);
         toast.error("Gagal memuat data mahasiswa dan program studi");
@@ -224,6 +229,8 @@ export default function StudentsTab() {
         data={selectedStudent}
         title="Detail Mahasiswa"
         description="Informasi lengkap mahasiswa terdaftar."
+        majors={majors}
+        faculties={faculties}
       />
     </>
   );

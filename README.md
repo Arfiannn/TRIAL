@@ -1,7 +1,3 @@
-Berikut versi **sudah dirapikan**, **lebih profesional**, dan **ditambahkan kalimat penutup** agar README-mu terlihat lengkap dan siap diserahkan atau dipublikasikan.
-
----
-
 # 📘 Learning Management System (LMS) API
 
 Sistem manajemen pembelajaran berbasis **microservices** menggunakan **Golang**, **Gin**, **GORM**, dan **MySQL** untuk mengelola proses perkuliahan digital seperti autentikasi, course, materi, tugas, dan pengumpulan tugas.
@@ -135,7 +131,7 @@ GET    /submission/:id/file
 
 ---
 
-## ✨ Penutup
+## ✨
 
 Proyek **TRIAL – Learning Management System (LMS)** Sistem ini dibangun untuk memberikan pengalaman pembelajaran digital yang terstruktur, mudah digunakan, aman, serta dapat dikembangkan lebih lanjut.
 

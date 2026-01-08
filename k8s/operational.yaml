@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: operational
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: operational
+  template:
+    metadata:
+      labels:
+        app: operational
+    spec:
+      containers:
+        - name: operational
+          image: trial-operational:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8010
+          envFrom:
+            - configMapRef:
+                name: mysql-config
+            - secretRef:
+                name: mysql-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: operational
+spec:
+  type: NodePort
+  selector:
+    app: operational
+  ports:
+    - port: 8010
+      targetPort: 8010
+      nodePort: 30003
+

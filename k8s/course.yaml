@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: course
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: course
+  template:
+    metadata:
+      labels:
+        app: course
+    spec:
+      containers:
+        - name: course
+          image: trial-course:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: mysql-config
+            - secretRef:
+                name: mysql-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: course
+spec:
+  type: NodePort
+  selector:
+    app: course
+  ports:
+    - port: 8081
+      targetPort: 8081
+      nodePort: 30002
